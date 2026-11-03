@@ -16,3 +16,6 @@ Thumbs.db
 # Môi trường cục bộ
 .env
 *.log
+
+# Eclipse / VS Code Java
+bin/
