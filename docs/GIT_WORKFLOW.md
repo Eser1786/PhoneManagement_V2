@@ -8,7 +8,7 @@ Tài liệu này quy định cách cả nhóm dùng Git cho đồ án **Phone Ma
 main                  ← bản ổn định, chỉ nhận code từ develop khi nộp / kết thúc mỗi tuần
  └── develop          ← nhánh tích hợp của cả nhóm
        ├── feature/thaianh-dbconnection
-       ├── feature/sang-docker-mysql
+       ├── feature/phuoc-docker-mysql
        ├── feature/phuoc-product-screen
        └── ...        ← mỗi công việc một nhánh, làm xong thì merge vào develop rồi xóa
 ```
@@ -41,7 +41,7 @@ Chỉ **một người** (Thái Anh) làm bước này.
 **3.1. Tạo repo trên GitHub**
 
 - Tạo repo mới, ví dụ `phone-management`, để **Private**, **không** tick "Add README".
-- Vào **Settings → Collaborators** mời Sang, Thảo, Phước, Trân.
+- Vào **Settings → Collaborators** mời phuoc, Thảo, Sang, Trân.
 
 **3.2. Đẩy project lên và tạo `develop`**
 
@@ -65,7 +65,7 @@ Trước khi commit, kiểm tra `.gitignore` đã loại `build/`, `.gradle/`, `
 
 Trên GitHub:
 
-- **Settings → Branches → Default branch**: đổi sang `develop` (để PR mặc định trỏ vào `develop`).
+- **Settings → Branches → Default branch**: đổi phuoc `develop` (để PR mặc định trỏ vào `develop`).
 - **Settings → Branches → Add branch ruleset** (hoặc *Branch protection rule*) cho `main` và `develop`:
   - Bật *Require a pull request before merging*
   - *Required approvals*: 1
@@ -73,14 +73,14 @@ Trên GitHub:
 
 Bước bảo vệ nhánh có thể cần repo ở chế độ Public hoặc tài khoản có gói phù hợp. Nếu không dùng được, cả nhóm tự giữ kỷ luật theo quy tắc ở mục 1.
 
-## 4. Các thành viên còn lại: lấy code và chuyển sang `develop`
+## 4. Các thành viên còn lại: lấy code và chuyển phuoc `develop`
 
 ```bash
 git clone https://github.com/<tai-khoan>/phone-management.git
 cd phone-management
 
 git branch -a                 # xem các nhánh (có origin/develop)
-git switch develop            # chuyển sang nhánh develop
+git switch develop            # chuyển phuoc nhánh develop
 git pull                      # lấy bản mới nhất
 ```
 
@@ -94,9 +94,9 @@ Sau đó bật database và chạy thử đúng theo `README.md`.
 feature/<tên>-<chức-năng>
 ```
 
-- `<tên>` viết thường, không dấu: `thaianh`, `sang`, `thao`, `phuoc`, `tran`.
+- `<tên>` viết thường, không dấu: `thaianh`, `phuoc`, `thao`, `phuoc`, `tran`.
 - `<chức-năng>` ngắn gọn, tiếng Anh hoặc tiếng Việt không dấu, nối bằng dấu gạch ngang.
-- Sửa lỗi: `fix/<tên>-<mô-tả>`, ví dụ `fix/sang-stock-negative`.
+- Sửa lỗi: `fix/<tên>-<mô-tả>`, ví dụ `fix/phuoc-stock-negative`.
 - Không dùng dấu cách, dấu tiếng Việt hay chữ hoa.
 
 ## 6. Danh sách nhánh cho từng công việc
@@ -118,19 +118,19 @@ Tên nhánh ứng với 37 công việc trong bảng phân công (kế hoạch 3
 | 3 | Tích hợp FE–BE và sửa lỗi | `feature/thaianh-integration` |
 | 3 | Đóng gói và README chạy dự án | `feature/thaianh-readme` |
 
-### Sang (Backend)
+### phuoc (Backend)
 
 | Tuần | Công việc | Nhánh |
 |---|---|---|
-| 1 | Docker MySQL (docker-compose) | `feature/sang-docker-mysql` |
-| 1 | Sửa và bổ sung dữ liệu mẫu SQL | `feature/sang-sql-data` |
-| 1 | DTO classes (13 bảng) | `feature/sang-dto` |
-| 1 | DAO: Brand, Category | `feature/sang-brand-category-dao` |
-| 1 | DAO: User, Role, Permission | `feature/sang-user-role-dao` |
-| 2 | DAO + BUS: Customer, Staff | `feature/sang-customer-staff` |
-| 2 | InventoryBUS (nhập/xuất kho) | `feature/sang-inventory-bus` |
-| 3 | Unit test DAO và BUS | `feature/sang-unit-test` |
-| 3 | Kiểm thử luồng nghiệp vụ end-to-end | `feature/sang-e2e-test` |
+| 1 | Docker MySQL (docker-compose) | `feature/phuoc-docker-mysql` |
+| 1 | Sửa và bổ sung dữ liệu mẫu SQL | `feature/phuoc-sql-data` |
+| 1 | DTO classes (13 bảng) | `feature/phuoc-dto` |
+| 1 | DAO: Brand, Category | `feature/phuoc-brand-category-dao` |
+| 1 | DAO: User, Role, Permission | `feature/phuoc-user-role-dao` |
+| 2 | DAO + BUS: Customer, Staff | `feature/phuoc-customer-staff` |
+| 2 | InventoryBUS (nhập/xuất kho) | `feature/phuoc-inventory-bus` |
+| 3 | Unit test DAO và BUS | `feature/phuoc-unit-test` |
+| 3 | Kiểm thử luồng nghiệp vụ end-to-end | `feature/phuoc-e2e-test` |
 
 ### Thảo (Frontend)
 
@@ -143,7 +143,7 @@ Tên nhánh ứng với 37 công việc trong bảng phân công (kế hoạch 3
 | 3 | Báo cáo thống kê | `feature/thao-report-screen` |
 | 3 | Slide thuyết trình | `feature/thao-slides` |
 
-### Phước (Frontend)
+### Sang (Frontend)
 
 | Tuần | Công việc | Nhánh |
 |---|---|---|
@@ -167,7 +167,7 @@ Tên nhánh ứng với 37 công việc trong bảng phân công (kế hoạch 3
 
 ## 7. Quy trình cho MỘT công việc (từ đầu đến khi merge)
 
-Ví dụ: Phước làm màn hình bán hàng, nhánh `feature/phuoc-sales-screen`.
+Ví dụ: Sang làm màn hình bán hàng, nhánh `feature/phuoc-sales-screen`.
 
 ### Bước 1. Cập nhật `develop` rồi tạo nhánh mới
 
@@ -467,10 +467,10 @@ Gợi ý mốc: `v0.1` cuối tuần 1, `v0.2` cuối tuần 2, `v1.0` bản n�
 
 ## 13. Lịch phối hợp gợi ý
 
-- **Đầu tuần 1:** Thái Anh làm mục 3 trước (tạo repo, `develop`, mời thành viên); sau đó mọi người mới tạo nhánh. Sang và Thái Anh merge sớm các phần nền (Gradle, Docker, DTO, DBConnection) để frontend kéo về dùng.
+- **Đầu tuần 1:** Thái Anh làm mục 3 trước (tạo repo, `develop`, mời thành viên); sau đó mọi người mới tạo nhánh. phuoc và Thái Anh merge sớm các phần nền (Gradle, Docker, DTO, DBConnection) để frontend kéo về dùng.
 - **Hằng ngày:** đầu buổi cập nhật `develop` (mục 11), cuối buổi `git push` nhánh của mình.
 - **Review:** PR nào mở thì người được chọn review trong ngày, tránh để PR nằm quá 24 giờ.
-- **Gợi ý cặp review:** Thái Anh ↔ Sang (backend), Thảo ↔ Phước ↔ Trân xoay vòng (frontend); PR liên quan cả hai phía thì nhờ một người bên kia xem.
+- **Gợi ý cặp review:** Thái Anh ↔ phuoc (backend), Thảo ↔ Sang ↔ Trân xoay vòng (frontend); PR liên quan cả hai phía thì nhờ một người bên kia xem.
 
 ## 14. Bảng lệnh nhanh
 
