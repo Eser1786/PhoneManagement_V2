@@ -12,10 +12,10 @@
 | Thành viên | Vai trò | Phụ trách chính |
 |---|---|---|
 | Thái Anh | Backend | Cấu hình dự án, DAO/BUS sản phẩm, xác thực, đơn hàng, báo cáo |
-| Sang | Backend | Docker/SQL, DTO, DAO/BUS người dùng, khách hàng, nhân viên, kho, test |
+| Phước | Backend | Docker/SQL, DTO, DAO/BUS người dùng, khách hàng, nhân viên, kho, test |
 | Thảo | Frontend | Wireframe, Dashboard, khách hàng, đơn hàng, báo cáo |
-| Phước | Frontend | Layout/theme, sản phẩm, bán hàng, kho |
-| Trân | Frontend | Điều hướng, đăng nhập, thương hiệu/danh mục, nhân viên, phân quyền |
+| Sang | Frontend | Layout/theme, sản phẩm, bán hàng, kho |
+| Trân | Frontend | Điều hướng, đăng nhập, thươPhướcng hiệu/danh mục, nhân viên, phân quyền |
 
 Chi tiết từng công việc, hạn và trạng thái xem file `docs/PhanCong_QuanLyBanDienThoai.xlsx`.
 
