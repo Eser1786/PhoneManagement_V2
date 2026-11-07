@@ -94,4 +94,21 @@ public class PermissionDAO {
         }
         return false;
     }
+
+    public List<String> findPermissionNamesByRoleId(int roleId) throws SQLException {
+        String sql = "SELECT p.permission_name FROM RolePermissions rp "
+                + "JOIN Permissions p ON p.permission_id = rp.permission_id "
+                + "WHERE rp.role_id = ? ORDER BY p.permission_name";
+        List<String> names = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, roleId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    names.add(rs.getString("permission_name"));
+                }
+            }
+        }
+        return names;
+    }
 }
