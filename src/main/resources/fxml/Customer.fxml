@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Chỉ là vùng nội dung. Sidebar + thanh trên cùng do MainLayout.fxml (Phước) lo. -->
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.phonestore.gui.CustomerController"
+      styleClass="cus-page" stylesheets="@../css/customer.css" spacing="20">
+
+    <!-- Tiêu đề + nút thêm -->
+    <HBox alignment="CENTER_LEFT">
+        <VBox spacing="4">
+            <Label styleClass="cus-title" text="Quản lý khách hàng"/>
+            <Label styleClass="cus-subtitle"
+                   text="Theo dõi và quản lý thông tin khách hàng, chăm sóc tốt hơn, tăng trải nghiệm mua sắm"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button styleClass="cus-primary-btn" text="+  Thêm khách hàng" onAction="#onAddCustomer"/>
+    </HBox>
+
+    <!-- Thanh tìm kiếm + bộ lọc -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <TextField fx:id="searchField" styleClass="cus-search" prefWidth="340"
+                   promptText="Tìm theo tên, số điện thoại hoặc email"/>
+        <ComboBox fx:id="cityFilter" styleClass="cus-combo" prefWidth="190"/>
+        <ComboBox fx:id="levelFilter" styleClass="cus-combo" prefWidth="170"/>
+        <Button styleClass="cus-ghost-btn" text="Xóa bộ lọc" onAction="#onResetFilters"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="countLabel" styleClass="cus-count" text="0 khách hàng"/>
+    </HBox>
+
+    <!-- Bảng danh sách -->
+    <VBox styleClass="cus-card" VBox.vgrow="ALWAYS">
+        <TableView fx:id="table" styleClass="cus-table" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colIndex"   text="STT"          prefWidth="60"  minWidth="50" sortable="false"/>
+                <TableColumn fx:id="colName"    text="HỌ TÊN"       prefWidth="200" sortable="false"/>
+                <TableColumn fx:id="colPhone"   text="SĐT"          prefWidth="120" sortable="false"/>
+                <TableColumn fx:id="colEmail"   text="EMAIL"        prefWidth="230" sortable="false"/>
+                <TableColumn fx:id="colCity"    text="THÀNH PHỐ"    prefWidth="130" sortable="false"/>
+                <TableColumn fx:id="colLevel"   text="HẠNG"         prefWidth="100" sortable="false"/>
+                <TableColumn fx:id="colSpent"   text="TỔNG CHI TIÊU" prefWidth="140" sortable="false"/>
+                <TableColumn fx:id="colActions" text="THAO TÁC"     prefWidth="130" sortable="false"/>
+            </columns>
+        </TableView>
+
+        <!-- Chân bảng: thông tin trang + nút phân trang (nút được tạo bằng code) -->
+        <HBox styleClass="cus-footer" alignment="CENTER_LEFT">
+            <Label fx:id="pageInfoLabel" styleClass="cus-footer-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <HBox fx:id="pager" spacing="6" alignment="CENTER_RIGHT"/>
+        </HBox>
+    </VBox>
+</VBox>
