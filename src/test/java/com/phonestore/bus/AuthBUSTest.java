@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** Test AuthBUS bằng DAO giả, không cần database. */
 class AuthBUSTest {
 
     private static final int ROLE_MANAGER = 2;
@@ -43,17 +44,17 @@ class AuthBUSTest {
 
         UserDAO fakeUserDAO = new UserDAO() {
             @Override
-            public UserDTO findByUsername(String username) throws SQLException {
-                if (failDatabase) {
-                    throw new SQLException("mất kết nối");
-                }
+            public UserDTO findByUsername(String username) {
                 UserDTO u = users.get(username);
                 return u == null ? null : copy(u);   // DAO thật luôn trả về đối tượng mới
             }
         };
         PermissionDAO fakePermissionDAO = new PermissionDAO() {
             @Override
-            public List<String> findPermissionNamesByRoleId(int roleId) {
+            public List<String> findPermissionNamesByRoleId(int roleId) throws SQLException {
+                if (failDatabase) {
+                    throw new SQLException("mất kết nối");
+                }
                 return roleId == ROLE_MANAGER
                         ? List.of(PermissionNames.VIEW_PRODUCTS, PermissionNames.EDIT_PRODUCT)
                         : List.of(PermissionNames.VIEW_PRODUCTS);
@@ -68,6 +69,7 @@ class AuthBUSTest {
         SessionManager.logout();
     }
 
+    // ------------------------------------------------------------ đăng nhập
 
     @Test
     void loginSucceedsAndStartsSession() {
@@ -144,11 +146,12 @@ class AuthBUSTest {
         assertEquals("manager", authBUS.getCurrentUser().getUsername());
     }
 
+    // ------------------------------------------------------------ phân quyền
 
     @Test
     void requirePermissionPassesWhenUserHasIt() {
         authBUS.login("manager", "123456");
-        authBUS.requirePermission(PermissionNames.EDIT_PRODUCT);  
+        authBUS.requirePermission(PermissionNames.EDIT_PRODUCT);   // không ném lỗi
     }
 
     @Test
@@ -176,6 +179,7 @@ class AuthBUSTest {
         assertThrows(BusinessException.class, () -> authBUS.requirePermission(PermissionNames.VIEW_PRODUCTS));
     }
 
+    // ------------------------------------------------------------ helpers
 
     private static UserDTO user(String username, String plainPassword, int roleId, boolean active) {
         UserDTO u = new UserDTO();
