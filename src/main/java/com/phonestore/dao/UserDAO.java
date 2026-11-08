@@ -58,7 +58,7 @@ public class UserDAO {
         return null;
     }
 
-    public UserDTO findByUsername(String username) {
+    public UserDTO findByUsername(String username) throws SQLException {
         String sql = "SELECT * FROM Users WHERE username = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
