@@ -1,11 +1,5 @@
 package com.phonestore;
 
-import com.phonestore.config.DBConnection;
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -14,6 +8,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.phonestore.config.DBConnection;
+import com.phonestore.gui.SceneNavigator;
+
+import javafx.application.Application;
+import javafx.stage.Stage;
 
 /**
  * Điểm khởi chạy ứng dụng. Hiện tại chỉ để thử nghiệm:
@@ -29,8 +29,8 @@ public class App extends Application {
     public void start(Stage stage) {
         printAllTables();
 
-        stage.setTitle("Quản lý bán điện thoại");
-        stage.setScene(new Scene(new StackPane(), 800, 600));
+        SceneNavigator.init(stage);
+        SceneNavigator.switchScene("Customer.fxml", "Quản lý bán điện thoại");
         stage.show();
     }
 
