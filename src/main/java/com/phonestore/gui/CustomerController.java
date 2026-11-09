@@ -1,5 +1,9 @@
 package com.phonestore.gui;
 
+import com.phonestore.bus.CustomerBUS;
+import com.phonestore.dto.CustomerDTO;
+import com.phonestore.dto.UserDTO;
+import com.phonestore.exception.BusinessException;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -40,9 +44,8 @@ import java.util.regex.Pattern;
 /**
  * Màn hình Quản lý khách hàng (Customer.fxml).
  *
- * Quy ước 3 lớp của nhóm: GUI chỉ gọi BUS. Vì BUS của Sang chưa được merge nên toàn bộ
- * chỗ lấy/ghi dữ liệu nằm trong khối "DỮ LIỆU TẠM" ở cuối file. Khi có CustomerBUS,
- * chỉ cần sửa 3 hàm trong khối đó, phần giao diện giữ nguyên.
+ * Quy ước 3 lớp của nhóm: GUI chỉ gọi BUS. Controller này gọi CustomerBUS
+ * (xem khối "KẾT NỐI BUS" ở cuối file). Lịch sử mua hàng chưa có API nên đang để trống.
  */
 public class CustomerController implements Initializable {
 
@@ -75,6 +78,8 @@ public class CustomerController implements Initializable {
     @FXML private TableColumn<CustomerRow, CustomerRow> colActions;
 
     private final ObservableList<CustomerRow> allCustomers = FXCollections.observableArrayList();
+    private CustomerBUS customerBUS;
+    private String loadError;
     private int currentPage = 1;
     private boolean updatingFilters = false;
 
@@ -97,7 +102,9 @@ public class CustomerController implements Initializable {
 
     private void setupColumns() {
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        table.setPlaceholder(new Label("Không tìm thấy khách hàng phù hợp. Thử đổi từ khóa hoặc xóa bộ lọc."));
+        table.setPlaceholder(new Label(loadError != null
+                ? loadError
+                : "Không tìm thấy khách hàng phù hợp. Thử đổi từ khóa hoặc xóa bộ lọc."));
 
         // Mỗi cột nhận nguyên dòng dữ liệu để cell tự vẽ.
         for (TableColumn<CustomerRow, CustomerRow> col :
@@ -269,7 +276,7 @@ public class CustomerController implements Initializable {
         TableView<OrderRow> history = new TableView<>(FXCollections.observableArrayList(loadOrderHistory(c.id())));
         history.getStyleClass().add("cus-table");
         history.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        history.setPlaceholder(new Label("Khách hàng chưa có đơn hàng nào"));
+        history.setPlaceholder(new Label("Chưa có dữ liệu đơn hàng (đang chờ API lấy đơn theo khách)"));
         history.setPrefHeight(230);
         history.getColumns().add(historyColumn("MÃ ĐƠN", 110, r -> "DH" + r.orderId()));
         history.getColumns().add(historyColumn("NGÀY MUA", 110, r -> r.date().format(DATE)));
@@ -342,10 +349,21 @@ public class CustomerController implements Initializable {
         content.setPrefWidth(420);
         pane.setContent(content);
 
-        // Kiểm tra trước khi đóng hộp thoại; sai thì giữ nguyên hộp thoại và báo lỗi.
+        // Bấm Lưu: kiểm tra nhanh -> gọi BUS. Lỗi thì giữ hộp thoại và hiện thông báo.
+        final CustomerRow[] saved = new CustomerRow[1];
         Button saveBtn = (Button) pane.lookupButton(saveType);
         saveBtn.addEventFilter(ActionEvent.ACTION, ev -> {
-            String msg = validate(existing, name.getText(), phone.getText(), email.getText(), address.getText(), city.getText());
+            String msg = validate(name.getText(), phone.getText(), email.getText(), address.getText(), city.getText());
+            if (msg == null) {
+                try {
+                    saved[0] = saveCustomer(existing, name.getText().trim(), phone.getText().trim(),
+                            email.getText().trim(), address.getText().trim(), city.getText().trim());
+                } catch (BusinessException ex) {
+                    msg = ex.getMessage();
+                } catch (RuntimeException ex) {
+                    msg = DB_ERROR;
+                }
+            }
             if (msg != null) {
                 error.setText(msg);
                 error.setVisible(true);
@@ -353,19 +371,11 @@ public class CustomerController implements Initializable {
             }
         });
 
-        dlg.showAndWait().filter(b -> b == saveType).ifPresent(b -> {
-            CustomerRow input = new CustomerRow(
-                    isEdit ? existing.id() : 0,
-                    name.getText().trim(), phone.getText().trim(),
-                    email.getText().trim(), address.getText().trim(), city.getText().trim(),
-                    isEdit ? existing.level() : "Bronze",
-                    isEdit ? existing.totalSpent() : BigDecimal.ZERO,
-                    isEdit ? existing.joinedDate() : LocalDate.now());
-            CustomerRow saved = saveCustomer(input);
+        dlg.showAndWait().filter(b -> b == saveType && saved[0] != null).ifPresent(b -> {
             if (isEdit) {
-                allCustomers.set(allCustomers.indexOf(existing), saved);
+                allCustomers.set(allCustomers.indexOf(existing), saved[0]);
             } else {
-                allCustomers.add(saved);
+                allCustomers.add(saved[0]);
             }
             rebuildFilters();
             refresh();
@@ -381,16 +391,13 @@ public class CustomerController implements Initializable {
         grid.add(field, 1, row);
     }
 
-    /** Trả về thông báo lỗi tiếng Việt, hoặc null nếu hợp lệ. Sau này chuyển sang CustomerBUS. */
-    private String validate(CustomerRow editing, String name, String phone, String email, String address, String city) {
+    /** Kiểm tra nhanh để báo lỗi sớm. Kiểm tra đầy đủ (trùng SĐT/email...) do CustomerBUS làm. */
+    private String validate(String name, String phone, String email, String address, String city) {
         if (name.isBlank()) return "Vui lòng nhập họ tên.";
         if (!PHONE.matcher(phone.trim()).matches()) return "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.";
         if (!EMAIL.matcher(email.trim()).matches()) return "Email chưa đúng định dạng, ví dụ ten@example.com.";
         if (address.isBlank()) return "Vui lòng nhập địa chỉ.";
         if (city.isBlank()) return "Vui lòng nhập thành phố.";
-        boolean dupPhone = allCustomers.stream()
-                .anyMatch(c -> c.phone().equals(phone.trim()) && (editing == null || c.id() != editing.id()));
-        if (dupPhone) return "Số điện thoại này đã thuộc về một khách hàng khác.";
         return null;
     }
 
@@ -443,64 +450,66 @@ public class CustomerController implements Initializable {
     }
 
     // =====================================================================
-    //  DỮ LIỆU TẠM  ←  thay bằng BUS khi PR của Sang/Phước được merge
-    //
-    //  Đã đối chiếu với DTO thật trên nhánh feature/phuoc-dto-dao:
-    //   - CustomerDTO chỉ có: customerId, userId, address, city, membershipLevel,
-    //     totalSpent (BigDecimal), createdAt. KHÔNG có họ tên / SĐT / email:
-    //     3 trường này nằm ở bảng Users (nối qua userId).
-    //   - OrderDTO: orderId, customerId, staffId, orderDate, totalAmount,
-    //     paymentMethod, paymentStatus, orderStatus, ...
-    //  => Màn hình cần một DTO ghép (Customers + Users) và một hàm lấy đơn theo khách.
+    //  KẾT NỐI BUS
     // =====================================================================
+    private static final String DB_ERROR =
+            "Không kết nối được cơ sở dữ liệu. Hãy chạy \"docker compose up -d\" rồi mở lại màn hình.";
 
-    /** Dòng hiển thị trên bảng. Sau này thay bằng DTO ghép Customers + Users của BE. */
+    /** Dòng hiển thị trên bảng: ghép CustomerDTO (Customers) với UserDTO (Users). */
     public record CustomerRow(int id, String fullName, String phone, String email,
                               String address, String city, String level,
                               BigDecimal totalSpent, LocalDate joinedDate) { }
 
-    /** Một đơn trong lịch sử mua. Khớp các field của OrderDTO. */
+    /** Một đơn trong lịch sử mua. Khớp các field của OrderDTO. Chờ API lấy đơn theo khách. */
     public record OrderRow(int orderId, LocalDate date, String paymentMethod,
                            String paymentStatus, String orderStatus, BigDecimal total) { }
 
-    private static BigDecimal vnd(long v) { return BigDecimal.valueOf(v); }
+    private CustomerBUS bus() {
+        if (customerBUS == null) customerBUS = new CustomerBUS();
+        return customerBUS;
+    }
 
-    /** TODO: customerBUS.getAll() -> ghép với Users theo userId để có tên/SĐT/email. */
     private List<CustomerRow> loadCustomers() {
-        LocalDate d = LocalDate.of(2026, 10, 1);
-        return new ArrayList<>(List.of(
-                new CustomerRow(1, "Nhan Thị Ngọc Trân", "0345435108", "tran.nhan@example.com", "12 Nguyễn Trãi, Quận 1", "TP. Hồ Chí Minh", "Gold", vnd(48_500_000), d),
-                new CustomerRow(2, "Nguyễn Minh Anh", "0901234567", "minhanh@example.com", "45 Lê Văn Sỹ, Quận 3", "TP. Hồ Chí Minh", "Silver", vnd(27_900_000), d),
-                new CustomerRow(3, "Trần Hoàng Nam", "0912345678", "hoangnam@example.com", "8 Hàng Bài, Hoàn Kiếm", "Hà Nội", "Silver", vnd(12_400_000), d),
-                new CustomerRow(4, "Lê Thảo Vy", "0987654321", "thaovy@example.com", "20 Bạch Đằng, Hải Châu", "Đà Nẵng", "Gold", vnd(31_200_000), d),
-                new CustomerRow(5, "Phạm Gia Bảo", "0933111222", "giabao@example.com", "3 Ninh Kiều", "Cần Thơ", "Bronze", vnd(3_990_000), d),
-                new CustomerRow(6, "Vũ Ngọc Hân", "0977888999", "ngochan@example.com", "78 Trần Hưng Đạo, Quận 1", "TP. Hồ Chí Minh", "Bronze", vnd(0), d),
-                new CustomerRow(7, "Đỗ Thanh Tùng", "0966555444", "thanhtung@example.com", "15 Lạch Tray, Ngô Quyền", "Hải Phòng", "Bronze", vnd(5_490_000), d),
-                new CustomerRow(8, "Bùi Mai Phương", "0944333222", "maiphuong@example.com", "99 Hoàng Diệu, Hải Châu", "Đà Nẵng", "Platinum", vnd(62_300_000), d),
-                new CustomerRow(9, "Hoàng Đức Long", "0922666777", "duclong@example.com", "5 Cầu Giấy", "Hà Nội", "Bronze", vnd(2_150_000), d),
-                new CustomerRow(10, "Võ Khánh Linh", "0955123123", "khanhlinh@example.com", "60 Võ Văn Tần, Quận 3", "TP. Hồ Chí Minh", "Silver", vnd(9_800_000), d)
-        ));
+        try {
+            List<CustomerRow> rows = new ArrayList<>();
+            for (CustomerDTO c : bus().getAllCustomers()) {
+                rows.add(toRow(c, bus().getUserOfCustomer(c)));
+            }
+            return rows;
+        } catch (BusinessException e) {
+            loadError = e.getMessage();
+        } catch (RuntimeException e) {
+            loadError = DB_ERROR;
+        }
+        return new ArrayList<>();
     }
 
-    /** TODO: orderBUS.getOrdersByCustomer(customerId). Dữ liệu mẫu SQL chưa có Orders nên bảng này sẽ trống khi chạy thật. */
+    /** TODO: chưa có hàm lấy đơn theo khách trong OrderDAO/OrderBUS. Khi có thì map OrderDTO -> OrderRow ở đây. */
     private List<OrderRow> loadOrderHistory(int customerId) {
-        if (customerId % 5 == 0) return List.of(); // minh họa trạng thái "chưa có đơn hàng"
-        LocalDate d = LocalDate.of(2026, 11, 3);
-        return List.of(
-                new OrderRow(1000 + customerId, d, "Tiền mặt", "Đã thanh toán", "Hoàn thành", vnd(24_990_000)),
-                new OrderRow(900 + customerId, d.minusDays(21), "Chuyển khoản", "Đã thanh toán", "Hoàn thành", vnd(1_290_000)),
-                new OrderRow(800 + customerId, d.minusDays(60), "Thẻ", "Chưa thanh toán", "Đã hủy", vnd(8_490_000))
-        );
+        return List.of();
     }
 
-    /**
-     * TODO: customerBUS.add/update (tạo cả Users nếu là khách mới), bắt BusinessException
-     * và hiện e.getMessage() bằng AlertUtil. Trả về bản ghi đã lưu (có id thật).
-     */
-    private CustomerRow saveCustomer(CustomerRow input) {
-        if (input.id() != 0) return input;
-        int nextId = allCustomers.stream().mapToInt(CustomerRow::id).max().orElse(0) + 1;
-        return new CustomerRow(nextId, input.fullName(), input.phone(), input.email(), input.address(),
-                input.city(), input.level(), input.totalSpent(), input.joinedDate());
+    /** existing == null: thêm mới (tạo cả Users + Customers); ngược lại: cập nhật. */
+    private CustomerRow saveCustomer(CustomerRow existing, String name, String phone,
+                                     String email, String address, String city) {
+        CustomerDTO dto = existing == null
+                ? bus().addCustomerWithUserInfo(name, phone, email, address, city)
+                : bus().updateCustomerWithUserInfo(existing.id(), name, phone, email, address, city);
+        return toRow(dto, bus().getUserOfCustomer(dto));
+    }
+
+    private static CustomerRow toRow(CustomerDTO c, UserDTO u) {
+        return new CustomerRow(
+                c.getCustomerId(),
+                u != null && u.getFullName() != null ? u.getFullName() : "(chưa liên kết tài khoản)",
+                u != null && u.getPhone() != null ? u.getPhone() : "",
+                u != null && u.getEmail() != null ? u.getEmail() : "",
+                nz(c.getAddress()), nz(c.getCity()), nz(c.getMembershipLevel()),
+                c.getTotalSpent() == null ? BigDecimal.ZERO : c.getTotalSpent(),
+                c.getCreatedAt() == null ? null : c.getCreatedAt().toLocalDate());
+    }
+
+    private static String nz(String s) {
+        return s == null ? "" : s;
     }
 }
