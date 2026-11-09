@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Chỉ là vùng nội dung. Sidebar + thanh trên cùng do MainLayout.fxml lo. -->
+<ScrollPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.phonestore.gui.DashboardController"
+            styleClass="dash-scroll" stylesheets="@../css/dashboard.css"
+            fitToWidth="true" hbarPolicy="NEVER">
+    <content>
+        <VBox styleClass="dash-page" spacing="20">
+
+            <!-- Tiêu đề -->
+            <HBox alignment="CENTER_LEFT">
+                <VBox spacing="4">
+                    <Label styleClass="dash-title" text="Tổng quan"/>
+                    <Label fx:id="dateLabel" styleClass="dash-subtitle" text="Tình hình kinh doanh hôm nay"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button styleClass="dash-btn-outline" text="Làm mới" onAction="#onRefresh"/>
+            </HBox>
+
+            <!-- Hàng 1: 4 thẻ số liệu -->
+            <GridPane hgap="16">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="25"/>
+                    <ColumnConstraints percentWidth="25"/>
+                    <ColumnConstraints percentWidth="25"/>
+                    <ColumnConstraints percentWidth="25"/>
+                </columnConstraints>
+
+                <VBox styleClass="dash-card" spacing="6" GridPane.columnIndex="0">
+                    <Label styleClass="dash-card-title" text="DOANH THU HÔM NAY"/>
+                    <Label fx:id="revenueValue" styleClass="dash-card-value" text="0 ₫"/>
+                    <Label fx:id="revenueHint" styleClass="dash-hint"/>
+                </VBox>
+                <VBox styleClass="dash-card" spacing="6" GridPane.columnIndex="1">
+                    <Label styleClass="dash-card-title" text="SỐ ĐƠN HÔM NAY"/>
+                    <Label fx:id="ordersValue" styleClass="dash-card-value" text="0"/>
+                    <Label fx:id="ordersHint" styleClass="dash-hint"/>
+                </VBox>
+                <VBox styleClass="dash-card" spacing="6" GridPane.columnIndex="2">
+                    <Label styleClass="dash-card-title" text="KHÁCH HÀNG MỚI"/>
+                    <Label fx:id="customersValue" styleClass="dash-card-value" text="0"/>
+                    <Label fx:id="customersHint" styleClass="dash-hint" text="Đăng ký trong hôm nay"/>
+                </VBox>
+                <VBox styleClass="dash-card" spacing="6" GridPane.columnIndex="3">
+                    <Label styleClass="dash-card-title" text="SẢN PHẨM SẮP HẾT HÀNG"/>
+                    <Label fx:id="lowStockValue" styleClass="dash-card-value" text="0"/>
+                    <Label fx:id="lowStockHint" styleClass="dash-hint" text="Cần nhập thêm"/>
+                </VBox>
+            </GridPane>
+
+            <!-- Hàng 2: biểu đồ doanh thu + top sản phẩm -->
+            <GridPane hgap="16">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="62"/>
+                    <ColumnConstraints percentWidth="38"/>
+                </columnConstraints>
+
+                <VBox styleClass="dash-card" spacing="8" GridPane.columnIndex="0">
+                    <Label styleClass="dash-section-title" text="Doanh thu 7 ngày gần đây"/>
+                    <Label styleClass="dash-section-sub" text="Đơn vị: triệu đồng"/>
+                    <LineChart fx:id="revenueChart" styleClass="dash-chart" prefHeight="290"
+                               legendVisible="false" animated="false" createSymbols="true">
+                        <xAxis><CategoryAxis/></xAxis>
+                        <yAxis><NumberAxis/></yAxis>
+                    </LineChart>
+                </VBox>
+
+                <VBox styleClass="dash-card" spacing="8" GridPane.columnIndex="1">
+                    <Label styleClass="dash-section-title" text="Top 5 sản phẩm bán chạy"/>
+                    <Label styleClass="dash-section-sub" text="Số lượng bán trong 7 ngày"/>
+                    <BarChart fx:id="topChart" styleClass="dash-chart" prefHeight="290"
+                              legendVisible="false" animated="false" barGap="2" categoryGap="12">
+                        <xAxis><NumberAxis/></xAxis>
+                        <yAxis><CategoryAxis/></yAxis>
+                    </BarChart>
+                </VBox>
+            </GridPane>
+
+            <!-- Hàng 3: 2 bảng -->
+            <GridPane hgap="16">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="50"/>
+                    <ColumnConstraints percentWidth="50"/>
+                </columnConstraints>
+
+                <VBox styleClass="dash-card" spacing="10" GridPane.columnIndex="0">
+                    <Label styleClass="dash-section-title" text="Sản phẩm sắp hết hàng"/>
+                    <TableView fx:id="lowStockTable" styleClass="dash-table" prefHeight="290">
+                        <columns>
+                            <TableColumn fx:id="colLowName"   text="SẢN PHẨM"  prefWidth="260" sortable="false"/>
+                            <TableColumn fx:id="colLowStock"  text="TỒN KHO"   prefWidth="80"  sortable="false"/>
+                            <TableColumn fx:id="colLowStatus" text="TRẠNG THÁI" prefWidth="110" sortable="false"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+
+                <VBox styleClass="dash-card" spacing="10" GridPane.columnIndex="1">
+                    <Label styleClass="dash-section-title" text="Đơn hàng gần đây"/>
+                    <TableView fx:id="recentTable" styleClass="dash-table" prefHeight="290">
+                        <columns>
+                            <TableColumn fx:id="colOrderId"     text="MÃ ĐƠN"     prefWidth="90"  sortable="false"/>
+                            <TableColumn fx:id="colOrderCustomer" text="KHÁCH HÀNG" prefWidth="170" sortable="false"/>
+                            <TableColumn fx:id="colOrderTotal"  text="TỔNG TIỀN"  prefWidth="130" sortable="false"/>
+                            <TableColumn fx:id="colOrderStatus" text="TRẠNG THÁI" prefWidth="110" sortable="false"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </GridPane>
+        </VBox>
+    </content>
+</ScrollPane>
