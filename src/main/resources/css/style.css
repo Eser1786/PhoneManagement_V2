@@ -1,0 +1,385 @@
+/* ==========================================================================
+   style.css - Theme chung và MainLayout (Sang)
+   ========================================================================== */
+
+.root {
+    -app-primary: #4a1d3f;
+    -app-primary-hover: #63294f;
+    -app-primary-light: #f3e4eb;
+    -app-accent: #a23b72;
+    -app-bg: #f8f4f6;
+    -app-surface: #ffffff;
+    -app-border: #eadce3;
+    -app-text: #2b1b26;
+    -app-muted: #8a7480;
+    -app-success: #1f7a4d;
+    -app-success-bg: #e2f4ea;
+    -app-danger: #b4234a;
+    -app-danger-bg: #fde6ec;
+    -app-warning: #9a6700;
+    -app-warning-bg: #fff3d6;
+
+    -fx-font-family: "Inter", "Segoe UI", "System";
+    -fx-font-size: 13px;
+}
+
+/* ---------- Khung chính & Vùng nội dung ---------- */
+.main-root {
+    -fx-background-color: -app-bg;
+}
+
+.content-area {
+    -fx-background-color: -app-bg;
+}
+
+/* ---------- Sidebar bên trái ---------- */
+.sidebar {
+    -fx-background-color: linear-gradient(to bottom, #391532 0%, #582349 52%, #a64d6d 100%);
+    -fx-padding: 22 14 18 14;
+    -fx-pref-width: 245px;
+    -fx-min-width: 245px;
+    -fx-max-width: 245px;
+}
+
+.sidebar-brand-box {
+    -fx-padding: 0 6 18 6;
+}
+
+.sidebar-logo {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 10;
+    -fx-min-width: 40px;
+    -fx-min-height: 40px;
+    -fx-max-width: 40px;
+    -fx-max-height: 40px;
+    -fx-alignment: CENTER;
+}
+
+.sidebar-logo-text {
+    -fx-text-fill: #391532;
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+}
+
+.sidebar-shop-name {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.sidebar-shop-sub {
+    -fx-text-fill: rgba(255, 255, 255, 0.68);
+    -fx-font-size: 10.5px;
+}
+
+.sidebar-section-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.55);
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 10 8 10;
+}
+
+/* ---------- Nút điều hướng Sidebar ---------- */
+.nav-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10;
+    -fx-text-fill: rgba(255, 255, 255, 0.86);
+    -fx-font-size: 13.5px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 10 14 10 14;
+    -fx-cursor: hand;
+    -fx-graphic-text-gap: 12;
+}
+
+.nav-btn:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-text-fill: #ffffff;
+}
+
+.nav-btn-active {
+    -fx-background-color: rgba(255, 255, 255, 0.20);
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent #ffffff transparent transparent;
+    -fx-border-width: 0 3.5 0 0;
+    -fx-border-insets: 4 0 4 0;
+}
+
+.nav-icon {
+    -fx-text-fill: rgba(255, 255, 255, 0.9);
+    -fx-font-size: 14px;
+    -fx-min-width: 20px;
+    -fx-alignment: CENTER;
+}
+
+/* ---------- Phần đáy Sidebar ---------- */
+.sidebar-help-btn {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-border-color: rgba(255, 255, 255, 0.25);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 12.5px;
+    -fx-padding: 9 14 9 14;
+    -fx-cursor: hand;
+}
+
+.sidebar-help-btn:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.20);
+}
+
+.sidebar-version {
+    -fx-text-fill: rgba(255, 255, 255, 0.58);
+    -fx-font-size: 11px;
+}
+
+/* ---------- Thanh tiêu đề (Top Header Bar) ---------- */
+.topbar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent -app-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 12 28 12 28;
+    -fx-min-height: 70px;
+}
+
+.topbar-category {
+    -fx-text-fill: #9b5178;
+    -fx-font-size: 10.5px;
+    -fx-font-weight: bold;
+}
+
+.topbar-title {
+    -fx-text-fill: -app-text;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.user-pill {
+    -fx-background-color: #faf6f8;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 5 14 5 6;
+    -fx-cursor: hand;
+}
+
+.user-pill:hover {
+    -fx-background-color: -app-primary-light;
+}
+
+.user-avatar {
+    -fx-background-color: #5b2649;
+    -fx-background-radius: 999;
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-max-width: 36px;
+    -fx-max-height: 36px;
+    -fx-alignment: CENTER;
+}
+
+.user-avatar-text {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 12.5px;
+    -fx-font-weight: bold;
+}
+
+.user-name {
+    -fx-text-fill: -app-text;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.user-role {
+    -fx-text-fill: -app-muted;
+    -fx-font-size: 11px;
+}
+
+.user-caret {
+    -fx-text-fill: -app-muted;
+    -fx-font-size: 11px;
+}
+
+/* ==========================================================================
+   Common UI Components (dùng chung cho Sản phẩm, Bán hàng, Kho...)
+   ========================================================================== */
+
+.page-container {
+    -fx-background-color: -app-bg;
+    -fx-padding: 24 28 24 28;
+}
+
+.page-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.page-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: -app-muted;
+}
+
+.app-card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 18;
+}
+
+.app-btn-primary {
+    -fx-background-color: -app-primary;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-padding: 8 18 8 18;
+    -fx-cursor: hand;
+}
+
+.app-btn-primary:hover {
+    -fx-background-color: -app-primary-hover;
+}
+
+.app-btn-outline {
+    -fx-background-color: #ffffff;
+    -fx-border-color: -app-primary;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: -app-primary;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+}
+
+.app-btn-outline:hover {
+    -fx-background-color: -app-primary-light;
+}
+
+.app-btn-danger-outline {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e4b4c2;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: -app-danger;
+    -fx-font-size: 12px;
+    -fx-padding: 4 10 4 10;
+    -fx-cursor: hand;
+}
+
+.app-btn-danger-outline:hover {
+    -fx-background-color: -app-danger-bg;
+}
+
+.app-btn-action {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d8c8d0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: -app-text;
+    -fx-font-size: 12px;
+    -fx-padding: 4 10 4 10;
+    -fx-cursor: hand;
+}
+
+.app-btn-action:hover {
+    -fx-background-color: -app-primary-light;
+    -fx-border-color: -app-primary;
+}
+
+.app-input, .app-combo {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dfd0d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 7 12 7 12;
+    -fx-text-fill: -app-text;
+}
+
+.app-input:focused, .app-combo:focused {
+    -fx-border-color: -app-primary;
+}
+
+/* ---------- Bảng chuẩn ---------- */
+.app-table {
+    -fx-background-color: #ffffff;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.app-table .column-header-background,
+.app-table .column-header,
+.app-table .filler {
+    -fx-background-color: -app-primary-light;
+    -fx-border-color: transparent;
+    -fx-size: 38px;
+}
+
+.app-table .column-header .label {
+    -fx-text-fill: #6e5563;
+    -fx-font-size: 11.5px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.app-table .table-row-cell {
+    -fx-cell-size: 46px;
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #f2e8ed transparent;
+}
+
+.app-table .table-row-cell:hover {
+    -fx-background-color: #fcf7fa;
+}
+
+.app-table .table-row-cell:selected {
+    -fx-background-color: #f6eaf0;
+}
+
+.app-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-text-fill: -app-text;
+    -fx-padding: 0 10 0 10;
+}
+
+/* ---------- Badges ---------- */
+.app-badge {
+    -fx-background-radius: 999;
+    -fx-padding: 3 10 3 10;
+    -fx-font-size: 11.5px;
+    -fx-font-weight: bold;
+}
+
+.app-badge-green {
+    -fx-background-color: -app-success-bg;
+    -fx-text-fill: -app-success;
+}
+
+.app-badge-red {
+    -fx-background-color: -app-danger-bg;
+    -fx-text-fill: -app-danger;
+}
+
+.app-badge-yellow {
+    -fx-background-color: -app-warning-bg;
+    -fx-text-fill: -app-warning;
+}
+
+/* ---------- Banner cảnh báo ---------- */
+.warning-banner {
+    -fx-background-color: #fff6df;
+    -fx-border-color: #f3d58d;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 10 16 10 16;
+}
+
+.warning-banner-text {
+    -fx-text-fill: #946200;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}

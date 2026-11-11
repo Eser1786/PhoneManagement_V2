@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="rootPane" prefHeight="820.0" prefWidth="1360.0"
+             styleClass="main-root" stylesheets="@../css/style.css"
+            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.phonestore.gui.MainLayoutController">
+
+    <!-- ==================== SIDEBAR BÊN TRÁI ==================== -->
+    <left>
+        <VBox spacing="6.0" styleClass="sidebar">
+            <!-- Logo & Tên cửa hàng -->
+            <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="sidebar-brand-box">
+                <StackPane styleClass="sidebar-logo">
+                    <Label styleClass="sidebar-logo-text" text="T" />
+                </StackPane>
+                <VBox alignment="CENTER_LEFT" spacing="1.0">
+                    <Label styleClass="sidebar-shop-name" text="TÊN SHOP" />
+                    <Label styleClass="sidebar-shop-sub" text="QUẢN TRỊ CỬA HÀNG" />
+                </VBox>
+            </HBox>
+
+            <Label styleClass="sidebar-section-label" text="QUẢN TRỊ CỬA HÀNG" />
+
+            <!-- Các nút điều hướng -->
+            <VBox spacing="4.0" VBox.vgrow="ALWAYS">
+                <Button fx:id="btnDashboard" maxWidth="Infinity" onAction="#onNavDashboard"
+                        styleClass="nav-btn, nav-btn-active" text="Tổng quan">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="⌂" />
+                    </graphic>
+                </Button>
+
+                <Button fx:id="btnSales" maxWidth="Infinity" onAction="#onNavSales"
+                        styleClass="nav-btn" text="Bán hàng">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="🛒" />
+                    </graphic>
+                </Button>
+
+                <Button fx:id="btnProduct" maxWidth="Infinity" onAction="#onNavProduct"
+                        styleClass="nav-btn" text="Quản lý sản phẩm">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="📦" />
+                    </graphic>
+                </Button>
+
+                <Button fx:id="btnBrandCategory" maxWidth="Infinity" onAction="#onNavBrandCategory"
+                        styleClass="nav-btn" text="Thương hiệu &amp; danh mục">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="🏷" />
+                    </graphic>
+                </Button>
+
+                <Button fx:id="btnOrder" maxWidth="Infinity" onAction="#onNavOrder"
+                        styleClass="nav-btn" text="Quản lý đơn hàng">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="🧾" />
+                    </graphic>
+                </Button>
+
+                <Button fx:id="btnInventory" maxWidth="Infinity" onAction="#onNavInventory"
+                        styleClass="nav-btn" text="Quản lý kho">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="📥" />
+                    </graphic>
+                </Button>
+
+                <Button fx:id="btnCustomer" maxWidth="Infinity" onAction="#onNavCustomer"
+                        styleClass="nav-btn" text="Quản lý khách hàng">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="👥" />
+                    </graphic>
+                </Button>
+
+                <Button fx:id="btnStaff" maxWidth="Infinity" onAction="#onNavStaff"
+                        styleClass="nav-btn" text="Quản lý nhân viên">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="👤" />
+                    </graphic>
+                </Button>
+
+                <Button fx:id="btnUserRole" maxWidth="Infinity" onAction="#onNavUserRole"
+                        styleClass="nav-btn" text="Quản lý tài khoản">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="⚙" />
+                    </graphic>
+                </Button>
+
+                <Button fx:id="btnReport" maxWidth="Infinity" onAction="#onNavReport"
+                        styleClass="nav-btn" text="Báo cáo &amp; Thống kê">
+                    <graphic>
+                        <Label styleClass="nav-icon" text="📊" />
+                    </graphic>
+                </Button>
+            </VBox>
+
+            <!-- Phần chân Sidebar -->
+            <VBox alignment="CENTER" spacing="8.0">
+                <Button maxWidth="Infinity" onAction="#onHelpClick"
+                        styleClass="sidebar-help-btn" text="Cần hỗ trợ?" />
+                <Label styleClass="sidebar-version" text="Admin Portal • v2.4" />
+            </VBox>
+        </VBox>
+    </left>
+
+    <!-- ==================== VÙNG BÊN PHẢI (TOPBAR + CONTENT) ==================== -->
+    <center>
+        <VBox>
+            <!-- Thanh tiêu đề trên cùng -->
+            <HBox alignment="CENTER_LEFT" spacing="16.0" styleClass="topbar">
+                <VBox alignment="CENTER_LEFT" spacing="2.0">
+                    <Label styleClass="topbar-category" text="HỆ THỐNG QUẢN TRỊ" />
+                    <Label fx:id="lblPageTitle" styleClass="topbar-title" text="Tổng quan" />
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS" />
+
+                <!-- Thông tin người dùng đang đăng nhập -->
+                <HBox fx:id="userProfileBox" alignment="CENTER_LEFT" spacing="10.0"
+                      onMouseClicked="#onUserMenuClick" styleClass="user-pill">
+                    <StackPane styleClass="user-avatar">
+                        <Label fx:id="lblUserInitials" styleClass="user-avatar-text" text="NT" />
+                    </StackPane>
+                    <VBox alignment="CENTER_LEFT" spacing="1.0">
+                        <Label fx:id="lblUserName" styleClass="user-name" text="Quản trị viên" />
+                        <Label fx:id="lblUserRole" styleClass="user-role" text="Hệ thống" />
+                    </VBox>
+                    <Label styleClass="user-caret" text="▾" />
+                </HBox>
+            </HBox>
+
+            <!-- Vùng nội dung: mỗi màn hình con được nạp vào đây -->
+            <StackPane fx:id="contentArea" styleClass="content-area" VBox.vgrow="ALWAYS" />
+        </VBox>
+    </center>
+
+</BorderPane>
