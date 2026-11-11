@@ -1,0 +1,86 @@
+/* ===== Panel trái ===== */
+.brand-panel {
+    -fx-background-color: linear-gradient(to bottom, #4a2040 0%, #8a4a68 55%, #b86a88 100%);
+}
+.brand-logo-box {
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-min-width: 80; -fx-min-height: 80;
+    -fx-max-width: 80; -fx-max-height: 80;
+}
+.brand-logo-letter { -fx-font-size: 44px; -fx-font-weight: bold; -fx-text-fill: #4a1f3d; }
+.brand-name        { -fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: white; }
+.brand-tagline     { -fx-font-size: 22px; -fx-text-fill: #f3cddd; -fx-text-alignment: center; }
+
+/* ===== Panel phải ===== */
+.form-panel { -fx-background-color: #f9f2f6; }
+
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-border-color: #eadde5;
+    -fx-border-radius: 16;
+    -fx-padding: 32;
+    -fx-effect: dropshadow(gaussian, rgba(74, 31, 61, 0.12), 24, 0, 0, 6);
+}
+.login-title    { -fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #4a1f3d; }
+.login-subtitle { -fx-font-size: 13px; -fx-text-fill: #444444; }
+.field-label    { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222222; -fx-padding: 6 0 0 0; }
+
+/* ===== Ô nhập ===== */
+.input-user, .input-pass {
+    -fx-background-color: #f7f3f6;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8;
+    -fx-border-color: #c9bfc6;
+    -fx-border-radius: 8;
+    -fx-pref-height: 42;
+    -fx-font-size: 13px;
+    -fx-prompt-text-fill: #8f858c;
+}
+.input-user { -fx-padding: 0 12 0 42; }   /* chừa chỗ cho icon bên trái */
+.input-pass { -fx-padding: 0 46 0 12; }   /* chừa chỗ cho con mắt bên phải */
+.input-user:focused, .input-pass:focused {
+    -fx-background-color: white;
+    -fx-border-color: #4a1f3d;
+}
+
+/* ===== Icon ===== */
+.icon { -fx-fill: transparent; -fx-stroke: #7a6a74; -fx-stroke-width: 1.8; }
+.icon-button { -fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 4; }
+.icon-button:hover .icon { -fx-stroke: #4a1f3d; }
+
+/* ===== Báo lỗi ===== */
+.error-box  { -fx-background-color: #fde8e8; -fx-background-radius: 8; -fx-padding: 8 12; }
+.error-icon {
+    -fx-background-color: #d64545;
+    -fx-background-radius: 9;
+    -fx-min-width: 18; -fx-min-height: 18;
+    -fx-max-width: 18; -fx-max-height: 18;
+    -fx-alignment: center;
+    -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold;
+}
+.error-text { -fx-text-fill: #b3363b; -fx-font-size: 13px; }
+
+/* ===== Ghi nhớ / Quên mật khẩu ===== */
+.remember { -fx-font-size: 13px; -fx-text-fill: #222222; }
+.forgot-link, .forgot-link:visited {
+    -fx-font-size: 13px;
+    -fx-text-fill: #4a1f3d;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ===== Nút Đăng nhập ===== */
+.btn-login {
+    -fx-background-color: #4a1f3d;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-pref-height: 44;
+    -fx-cursor: hand;
+}
+.btn-login:hover    { -fx-background-color: #5e2a4e; }
+.btn-login:pressed  { -fx-background-color: #3a1830; }
+.btn-login:disabled { -fx-opacity: 0.6; }

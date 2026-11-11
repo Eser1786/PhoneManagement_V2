@@ -30,7 +30,7 @@ public class App extends Application {
         printAllTables();
 
         SceneNavigator.init(stage);
-        SceneNavigator.switchScene("Customer.fxml", "Quản lý bán điện thoại");
+        SceneNavigator.switchScene("Login.fxml", "Đăng nhập");
         stage.show();
     }
 
