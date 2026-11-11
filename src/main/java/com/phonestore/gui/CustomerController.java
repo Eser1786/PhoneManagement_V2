@@ -4,6 +4,9 @@ import com.phonestore.bus.CustomerBUS;
 import com.phonestore.dto.CustomerDTO;
 import com.phonestore.dto.UserDTO;
 import com.phonestore.exception.BusinessException;
+import com.phonestore.util.FormatUtil;
+import com.phonestore.util.PermissionNames;
+import com.phonestore.util.SessionManager;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -23,6 +26,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.concurrent.Task;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -30,10 +34,8 @@ import javafx.scene.layout.VBox;
 
 import java.math.BigDecimal;
 import java.net.URL;
-import java.text.NumberFormat;
 import java.text.Normalizer;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -53,9 +55,6 @@ public class CustomerController implements Initializable {
     private static final String ALL_CITIES = "Tất cả thành phố";
     private static final String ALL_LEVELS = "Tất cả hạng";
 
-    private static final NumberFormat MONEY = NumberFormat.getInstance(Locale.forLanguageTag("vi-VN"));
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    static { MONEY.setMaximumFractionDigits(0); }
     private static final Pattern PHONE = Pattern.compile("^0\\d{9}$");
     private static final Pattern EMAIL = Pattern.compile("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$");
 
@@ -66,6 +65,7 @@ public class CustomerController implements Initializable {
     @FXML private Label countLabel;
     @FXML private Label pageInfoLabel;
     @FXML private HBox pager;
+    @FXML private Button addCustomerButton;
 
     @FXML private TableView<CustomerRow> table;
     @FXML private TableColumn<CustomerRow, CustomerRow> colIndex;
@@ -88,9 +88,8 @@ public class CustomerController implements Initializable {
     // =====================================================================
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        allCustomers.setAll(loadCustomers());
-
         setupColumns();
+        setManagementActionsVisible(SessionManager.hasPermission(PermissionNames.MANAGE_CUSTOMERS));
         rebuildFilters();
 
         searchField.textProperty().addListener((o, a, b) -> goToFirstPageAndRefresh());
@@ -98,6 +97,7 @@ public class CustomerController implements Initializable {
         levelFilter.valueProperty().addListener((o, a, b) -> { if (!updatingFilters) goToFirstPageAndRefresh(); });
 
         refresh();
+        loadCustomersAsync();
     }
 
     private void setupColumns() {
@@ -140,6 +140,9 @@ public class CustomerController implements Initializable {
             {
                 view.getStyleClass().add("cus-btn-outline");
                 edit.getStyleClass().add("cus-btn-outline");
+                boolean canManage = SessionManager.hasPermission(PermissionNames.MANAGE_CUSTOMERS);
+                edit.setVisible(canManage);
+                edit.setManaged(canManage);
                 box.setAlignment(Pos.CENTER_LEFT);
                 view.setOnAction(e -> showDetail(getItem()));
                 edit.setOnAction(e -> showForm(getItem()));
@@ -270,7 +273,7 @@ public class CustomerController implements Initializable {
         addInfo(info, 1, "Email", c.email());
         addInfo(info, 2, "Địa chỉ", c.address());
         addInfo(info, 3, "Thành phố", c.city());
-        addInfo(info, 4, "Ngày tham gia", c.joinedDate() == null ? "" : c.joinedDate().format(DATE));
+        addInfo(info, 4, "Ngày tham gia", FormatUtil.formatDate(c.joinedDate()));
         addInfo(info, 5, "Tổng chi tiêu", formatMoney(c.totalSpent()));
 
         TableView<OrderRow> history = new TableView<>(FXCollections.observableArrayList(loadOrderHistory(c.id())));
@@ -279,7 +282,7 @@ public class CustomerController implements Initializable {
         history.setPlaceholder(new Label("Chưa có dữ liệu đơn hàng (đang chờ API lấy đơn theo khách)"));
         history.setPrefHeight(230);
         history.getColumns().add(historyColumn("MÃ ĐƠN", 110, r -> "DH" + r.orderId()));
-        history.getColumns().add(historyColumn("NGÀY MUA", 110, r -> r.date().format(DATE)));
+        history.getColumns().add(historyColumn("NGÀY MUA", 110, r -> FormatUtil.formatDate(r.date())));
         history.getColumns().add(historyColumn("THANH TOÁN", 120, OrderRow::paymentMethod));
         history.getColumns().add(historyColumn("TRẠNG THÁI", 120, OrderRow::orderStatus));
         history.getColumns().add(historyColumn("TỔNG TIỀN", 130, r -> formatMoney(r.total())));
@@ -349,26 +352,64 @@ public class CustomerController implements Initializable {
         content.setPrefWidth(420);
         pane.setContent(content);
 
-        // Bấm Lưu: kiểm tra nhanh -> gọi BUS. Lỗi thì giữ hộp thoại và hiện thông báo.
+        // Keep the dialog open while the BUS operation runs off the JavaFX thread.
         final CustomerRow[] saved = new CustomerRow[1];
+        final boolean[] saving = {false};
         Button saveBtn = (Button) pane.lookupButton(saveType);
+        Button cancelBtn = (Button) pane.lookupButton(ButtonType.CANCEL);
+        dlg.setOnCloseRequest(event -> {
+            if (saving[0]) event.consume();
+        });
         saveBtn.addEventFilter(ActionEvent.ACTION, ev -> {
-            String msg = validate(name.getText(), phone.getText(), email.getText(), address.getText(), city.getText());
-            if (msg == null) {
-                try {
-                    saved[0] = saveCustomer(existing, name.getText().trim(), phone.getText().trim(),
-                            email.getText().trim(), address.getText().trim(), city.getText().trim());
-                } catch (BusinessException ex) {
-                    msg = ex.getMessage();
-                } catch (RuntimeException ex) {
-                    msg = DB_ERROR;
-                }
-            }
-            if (msg != null) {
-                error.setText(msg);
+            String validationError = validate(name.getText(), phone.getText(), email.getText(),
+                    address.getText(), city.getText());
+            if (validationError != null) {
+                error.setText(validationError);
                 error.setVisible(true);
                 ev.consume();
+                return;
             }
+
+            ev.consume();
+            saving[0] = true;
+            saveBtn.setDisable(true);
+            cancelBtn.setDisable(true);
+            CustomerBUS customerService = bus();
+            String fullName = name.getText().trim();
+            String phoneNumber = phone.getText().trim();
+            String emailAddress = email.getText().trim();
+            String customerAddress = address.getText().trim();
+            String customerCity = city.getText().trim();
+            Task<CustomerRow> task = new Task<>() {
+                @Override
+                protected CustomerRow call() {
+                    return saveCustomer(customerService, existing, fullName, phoneNumber,
+                            emailAddress, customerAddress, customerCity);
+                }
+            };
+            task.setOnSucceeded(event -> {
+                saving[0] = false;
+                saved[0] = task.getValue();
+                dlg.setResult(saveType);
+                dlg.close();
+            });
+            task.setOnFailed(event -> {
+                saving[0] = false;
+                saveBtn.setDisable(false);
+                cancelBtn.setDisable(false);
+                Throwable failure = task.getException();
+                if (failure instanceof BusinessException) {
+                    error.setText(failure.getMessage());
+                } else {
+                    System.err.println("Không lưu được khách hàng: " + failure);
+                    failure.printStackTrace();
+                    error.setText(DB_ERROR);
+                }
+                error.setVisible(true);
+            });
+            Thread worker = new Thread(task, "customer-save");
+            worker.setDaemon(true);
+            worker.start();
         });
 
         dlg.showAndWait().filter(b -> b == saveType && saved[0] != null).ifPresent(b -> {
@@ -446,7 +487,7 @@ public class CustomerController implements Initializable {
     }
 
     private static String formatMoney(BigDecimal amount) {
-        return MONEY.format(amount == null ? BigDecimal.ZERO : amount) + " ₫";
+        return FormatUtil.formatCurrency(amount);
     }
 
     // =====================================================================
@@ -469,19 +510,41 @@ public class CustomerController implements Initializable {
         return customerBUS;
     }
 
-    private List<CustomerRow> loadCustomers() {
-        try {
-            List<CustomerRow> rows = new ArrayList<>();
-            for (CustomerDTO c : bus().getAllCustomers()) {
-                rows.add(toRow(c, bus().getUserOfCustomer(c)));
+    private void loadCustomersAsync() {
+        table.setPlaceholder(new Label("Đang tải danh sách khách hàng..."));
+        CustomerBUS customerService = bus();
+        Task<List<CustomerRow>> task = new Task<>() {
+            @Override
+            protected List<CustomerRow> call() {
+                List<CustomerRow> rows = new ArrayList<>();
+                for (CustomerDTO customer : customerService.getAllCustomers()) {
+                    rows.add(toRow(customer, customerService.getUserOfCustomer(customer)));
+                }
+                return rows;
             }
-            return rows;
-        } catch (BusinessException e) {
-            loadError = e.getMessage();
-        } catch (RuntimeException e) {
-            loadError = DB_ERROR;
-        }
-        return new ArrayList<>();
+        };
+        task.setOnSucceeded(event -> {
+            loadError = null;
+            allCustomers.setAll(task.getValue());
+            table.setPlaceholder(new Label("Không tìm thấy khách hàng phù hợp. Thử đổi từ khóa hoặc xóa bộ lọc."));
+            rebuildFilters();
+            refresh();
+        });
+        task.setOnFailed(event -> {
+            Throwable failure = task.getException();
+            loadError = failure instanceof BusinessException ? failure.getMessage() : DB_ERROR;
+            if (!(failure instanceof BusinessException)) {
+                System.err.println("Không tải được khách hàng: " + failure);
+                failure.printStackTrace();
+            }
+            allCustomers.clear();
+            table.setPlaceholder(new Label(loadError));
+            rebuildFilters();
+            refresh();
+        });
+        Thread worker = new Thread(task, "customer-load");
+        worker.setDaemon(true);
+        worker.start();
     }
 
     /** TODO: chưa có hàm lấy đơn theo khách trong OrderDAO/OrderBUS. Khi có thì map OrderDTO -> OrderRow ở đây. */
@@ -490,12 +553,18 @@ public class CustomerController implements Initializable {
     }
 
     /** existing == null: thêm mới (tạo cả Users + Customers); ngược lại: cập nhật. */
-    private CustomerRow saveCustomer(CustomerRow existing, String name, String phone,
-                                     String email, String address, String city) {
+    private CustomerRow saveCustomer(CustomerBUS customerService, CustomerRow existing,
+                                     String name, String phone, String email,
+                                     String address, String city) {
         CustomerDTO dto = existing == null
-                ? bus().addCustomerWithUserInfo(name, phone, email, address, city)
-                : bus().updateCustomerWithUserInfo(existing.id(), name, phone, email, address, city);
-        return toRow(dto, bus().getUserOfCustomer(dto));
+                ? customerService.addCustomerWithUserInfo(name, phone, email, address, city)
+                : customerService.updateCustomerWithUserInfo(existing.id(), name, phone, email, address, city);
+        return toRow(dto, customerService.getUserOfCustomer(dto));
+    }
+
+    private void setManagementActionsVisible(boolean visible) {
+        addCustomerButton.setVisible(visible);
+        addCustomerButton.setManaged(visible);
     }
 
     private static CustomerRow toRow(CustomerDTO c, UserDTO u) {

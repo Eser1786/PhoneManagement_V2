@@ -23,7 +23,8 @@
                    text="Theo dõi và quản lý thông tin khách hàng, chăm sóc tốt hơn, tăng trải nghiệm mua sắm"/>
         </VBox>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button styleClass="cus-primary-btn" text="+  Thêm khách hàng" onAction="#onAddCustomer"/>
+        <Button fx:id="addCustomerButton" styleClass="cus-primary-btn"
+                text="+  Thêm khách hàng" onAction="#onAddCustomer"/>
     </HBox>
 
     <!-- Thanh tìm kiếm + bộ lọc -->
