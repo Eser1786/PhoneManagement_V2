@@ -69,11 +69,12 @@ public class BrandCategoryController {
                 "Tìm kiếm thương hiệu...", "thương hiệu", 6,
                 b -> b.getBrandName() + " " + nz(b.getCountry()) + " " + nz(b.getDescription()));
 
-        brandPanel.addIndexColumn(50);
-        brandPanel.addNodeColumn("LOGO", 60, this::buildLogo);
-        brandPanel.addTextColumn("TÊN THƯƠNG HIỆU", 130, BrandDTO::getBrandName);
-        brandPanel.addTextColumn("MÔ TẢ", 200, b -> nz(b.getDescription()));
-        brandPanel.addActionColumn(120);
+        brandPanel.getStyleClass().add("brand-panel");
+        brandPanel.addIndexColumn(36);
+        brandPanel.addNodeColumn("LOGO", 54, this::buildLogo);
+        brandPanel.addTextColumn("THƯƠNG HIỆU", 110, BrandDTO::getBrandName);
+        brandPanel.addTextColumn("MÔ TẢ", 130, b -> nz(b.getDescription()));
+        brandPanel.addActionColumn(110);
 
         brandPanel.setOnAdd(() -> showBrandForm(null));
         brandPanel.setOnEdit(this::showBrandForm);

@@ -58,7 +58,7 @@ public class LoginController {
         }
 
         // Khi MainLayout.fxml của Sang sẵn sàng, đổi "Customer.fxml" thành "MainLayout.fxml"
-        SceneNavigator.switchScene("BrandCategory.fxml", "Thương hiệu & danh mục");
+        SceneNavigator.switchScene("MainLayout.fxml", "Hệ thống quản trị");
     }
 
     @FXML

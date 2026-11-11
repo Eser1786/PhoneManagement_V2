@@ -80,7 +80,7 @@ public class CrudPanel<T> extends VBox {
         // Bảng
         table.getStyleClass().add("crud-table");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-        table.setFixedCellSize(60);
+        table.setFixedCellSize(-1);
         table.setPlaceholder(new Label("Chưa có dữ liệu"));
         VBox.setVgrow(table, Priority.ALWAYS);
 
@@ -116,6 +116,10 @@ public class CrudPanel<T> extends VBox {
 
     public void setOnDelete(Consumer<T> action) {
         this.onDelete = action;
+    }
+
+    public void setUnconstrainedColumnResize() {
+        table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
     }
 
     /** Nạp (hoặc nạp lại) toàn bộ dữ liệu. Trang hiện tại được giữ nếu còn hợp lệ. */
@@ -154,7 +158,6 @@ public class CrudPanel<T> extends VBox {
 
             {
                 label.setWrapText(true);
-                label.setMaxHeight(48);
                 label.maxWidthProperty().bind(col.widthProperty().subtract(16));
             }
 

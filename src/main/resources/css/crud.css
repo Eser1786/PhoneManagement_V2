@@ -99,6 +99,10 @@
 .crud-btn-danger { -fx-border-color: -crud-danger; -fx-text-fill: -crud-danger; }
 .crud-btn-danger:hover { -fx-background-color: #fde8ee; }
 
+/* Giữ đủ nhãn nút và tiêu đề trong bảng thương hiệu có nhiều cột. */
+.brand-panel .crud-btn-outline { -fx-padding: 3 5; -fx-font-size: 11px; }
+.brand-panel .crud-table .column-header .label { -fx-font-size: 11px; }
+
 /* ===== Nút phân trang ===== */
 .crud-page-btn {
     -fx-background-color: white;
