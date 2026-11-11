@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.phonestore.gui.BrandCategoryController"
+      stylesheets="@../css/crud.css"
+      styleClass="crud-page" spacing="16"
+      prefWidth="1100" prefHeight="700">
+
+    <padding>
+        <Insets top="24" right="28" bottom="24" left="28"/>
+    </padding>
+
+    <Label text="Thương hiệu &amp; Danh mục" styleClass="crud-page-title"/>
+    <Label text="Quản lý các thương hiệu và danh mục sản phẩm trong hệ thống cửa hàng"
+           styleClass="crud-page-subtitle"/>
+
+    <!-- Hai khung Thương hiệu / Danh mục được controller thêm vào đây -->
+    <HBox fx:id="panels" spacing="20" VBox.vgrow="ALWAYS"/>
+</VBox>

@@ -58,7 +58,7 @@ public class LoginController {
         }
 
         // Khi MainLayout.fxml của Sang sẵn sàng, đổi "Customer.fxml" thành "MainLayout.fxml"
-        SceneNavigator.switchScene("Customer.fxml", "Quản lý bán điện thoại");
+        SceneNavigator.switchScene("BrandCategory.fxml", "Thương hiệu & danh mục");
     }
 
     @FXML
