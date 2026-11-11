@@ -1,5 +1,8 @@
 package com.phonestore.gui;
 
+import com.phonestore.util.FormatUtil;
+import com.phonestore.util.PermissionNames;
+import com.phonestore.util.SessionManager;
 import com.phonestore.exception.BusinessException;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
@@ -28,10 +31,8 @@ import javafx.scene.layout.VBox;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.text.Normalizer;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -51,11 +52,6 @@ public class OrderController implements Initializable {
     private static final String ALL_STATUS = "Tất cả trạng thái";
     /** Danh sách trạng thái đề xuất - cần nhóm thống nhất (hiện DB chỉ có "Chờ xử lý"). */
     private static final List<String> STATUSES = List.of("Chờ xử lý", "Đang giao", "Hoàn thành", "Đã hủy");
-
-    private static final NumberFormat MONEY = NumberFormat.getInstance(Locale.forLanguageTag("vi-VN"));
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final DateTimeFormatter DATETIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    static { MONEY.setMaximumFractionDigits(0); }
 
     // ---------- Thành phần trong Order.fxml ----------
     @FXML private TextField searchField;
@@ -119,7 +115,7 @@ public class OrderController implements Initializable {
         }
         colId.setCellFactory(c -> textCell(r -> "DH" + r.id()));
         colCustomer.setCellFactory(c -> textCell(OrderRow::customer));
-        colDate.setCellFactory(c -> textCell(r -> r.date().format(DATETIME)));
+        colDate.setCellFactory(c -> textCell(r -> FormatUtil.formatDateTime(r.date())));
         colTotal.setCellFactory(c -> textCell(r -> formatMoney(r.total())));
         colMethod.setCellFactory(c -> textCell(OrderRow::method));
 
@@ -201,7 +197,7 @@ public class OrderController implements Initializable {
         info.setHgap(24);
         info.setVgap(8);
         addInfo(info, 0, "Khách hàng", order.customer());
-        addInfo(info, 1, "Ngày đặt", order.date().format(DATETIME));
+        addInfo(info, 1, "Ngày đặt", FormatUtil.formatDateTime(order.date()));
         addInfo(info, 2, "Thanh toán", order.method() + " (" + order.payStatus() + ")");
         addInfo(info, 3, "Tổng tiền", formatMoney(order.total()));
 
@@ -236,6 +232,11 @@ public class OrderController implements Initializable {
 
         save.setOnAction(e -> {
             msg.getStyleClass().removeAll("ord-msg-ok", "ord-msg-err");
+            if (!canProcessOrders()) {
+                msg.setText("Bạn không có quyền cập nhật trạng thái đơn hàng.");
+                msg.getStyleClass().add("ord-msg-err");
+                return;
+            }
             try {
                 OrderRow updated = changeStatus(order, statusBox.getValue());
                 allOrders.set(allOrders.indexOf(order), updated);
@@ -312,7 +313,7 @@ public class OrderController implements Initializable {
         sb.append("        PHONE MANAGEMENT - HÓA ĐƠN BÁN HÀNG\n");
         sb.append("--------------------------------------------\n");
         sb.append("Mã đơn     : DH").append(o.id()).append('\n');
-        sb.append("Ngày       : ").append(o.date().format(DATETIME)).append('\n');
+        sb.append("Ngày       : ").append(FormatUtil.formatDateTime(o.date())).append('\n');
         sb.append("Khách hàng : ").append(o.customer()).append('\n');
         sb.append("Thanh toán : ").append(o.method()).append(" - ").append(o.payStatus()).append('\n');
         sb.append("--------------------------------------------\n");
@@ -363,7 +364,7 @@ public class OrderController implements Initializable {
     }
 
     private static String formatMoney(BigDecimal amount) {
-        return MONEY.format(amount == null ? BigDecimal.ZERO : amount) + " ₫";
+        return FormatUtil.formatCurrency(amount);
     }
 
     // =====================================================================
@@ -417,10 +418,9 @@ public class OrderController implements Initializable {
     }
 
     /**
-     * TODO: nối quyền thật, ví dụ AuthBUS.hasPermission("process_orders")
-     * (xem cách AuthBUS/SessionManager được dùng trong repo rồi thay vào đây).
+     * The BUS enforces this permission for mutations; the UI also gates the controls.
      */
     private boolean canProcessOrders() {
-        return true;
+        return SessionManager.hasPermission(PermissionNames.PROCESS_ORDERS);
     }
 }

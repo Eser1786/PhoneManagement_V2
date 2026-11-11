@@ -1,5 +1,6 @@
 package com.phonestore.gui;
 
+import com.phonestore.util.FormatUtil;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -14,7 +15,6 @@ import javafx.scene.control.TableView;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.text.Normalizer;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -33,10 +33,7 @@ import java.util.function.Function;
  */
 public class DashboardController implements Initializable {
 
-    private static final NumberFormat MONEY = NumberFormat.getInstance(Locale.forLanguageTag("vi-VN"));
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("dd/MM");
-    private static final DateTimeFormatter FULL = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    static { MONEY.setMaximumFractionDigits(0); }
 
     // ---------- Thành phần trong Dashboard.fxml ----------
     @FXML private Label dateLabel;
@@ -79,7 +76,7 @@ public class DashboardController implements Initializable {
 
     private void refresh() {
         DashboardData data = loadData();
-        dateLabel.setText("Tình hình kinh doanh hôm nay, " + LocalDate.now().format(FULL));
+        dateLabel.setText("Tình hình kinh doanh hôm nay, " + FormatUtil.formatDate(LocalDate.now()));
         fillCards(data);
         fillRevenueChart(data.revenueLast7Days());
         fillTopChart(data.topProducts());
@@ -205,7 +202,7 @@ public class DashboardController implements Initializable {
     }
 
     private static String formatMoney(BigDecimal amount) {
-        return MONEY.format(amount == null ? BigDecimal.ZERO : amount) + " ₫";
+        return FormatUtil.formatCurrency(amount);
     }
 
     // =====================================================================
@@ -268,7 +265,7 @@ public class DashboardController implements Initializable {
                 List.of(
                         new RecentOrderRow(1014, "Nguyễn Văn An", vnd(29_990_000), "Hoàn thành"),
                         new RecentOrderRow(1013, "Trần Thị Bích", vnd(14_490_000), "Đang giao"),
-                        new RecentOrderRow(1012, "Lê Hoàng Cường", vnd(8_990_000), "Chờ xác nhận"),
+                        new RecentOrderRow(1012, "Lê Hoàng Cường", vnd(8_990_000), "Chờ xử lý"),
                         new RecentOrderRow(1011, "Phạm Ngọc Dung", vnd(33_990_000), "Hoàn thành"),
                         new RecentOrderRow(1010, "Võ Quốc Em", vnd(6_490_000), "Đã hủy"),
                         new RecentOrderRow(1009, "Nguyễn Văn An", vnd(12_990_000), "Hoàn thành")));
