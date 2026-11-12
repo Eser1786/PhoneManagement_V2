@@ -1,6 +1,7 @@
 package com.phonestore.util;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
@@ -49,5 +50,13 @@ public final class FormatUtil {
 
     public static String formatDateTime(LocalDateTime dateTime) {
         return dateTime == null ? "" : dateTime.format(DATETIME_FORMAT);
+    }
+
+    public static String dateTime(Timestamp timestamp) {
+        return timestamp == null ? "" : DATETIME_FORMAT.format(timestamp.toLocalDateTime());
+    }
+
+    public static String date(LocalDate date) {
+        return date == null ? "" : DATE_FORMAT.format(date);
     }
 }
