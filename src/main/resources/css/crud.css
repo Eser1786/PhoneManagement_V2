@@ -159,3 +159,58 @@
     -fx-text-fill: -crud-danger;
     -fx-padding: 8 12;
 }
+/* ===== STT 25: thẻ bảng liền, nút trang hiện tại, ô chọn, avatar, huy hiệu ===== */
+.crud-panel.crud-flat { -fx-padding: 0; }
+.crud-flat .crud-table .column-header-background { -fx-background-radius: 16 16 0 0; }
+.crud-flat .crud-footer { -fx-padding: 12 20; }
+
+.crud-page-btn-active {
+    -fx-background-color: -crud-primary;
+    -fx-border-color: -crud-primary;
+    -fx-text-fill: white;
+}
+.crud-page-btn-active:hover { -fx-background-color: -crud-primary-hover; }
+
+/* Ô chọn lọc ngoài trang */
+.crud-combo {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: -crud-border;
+    -fx-border-radius: 8;
+    -fx-pref-height: 38;
+}
+.crud-combo:focused { -fx-border-color: -crud-primary; }
+.crud-combo .list-cell { -fx-text-fill: -crud-text; -fx-padding: 0 4 0 8; }
+
+/* Avatar tròn + huy hiệu trạng thái (màu avatar được đặt trong code) */
+.crud-avatar {
+    -fx-background-radius: 999;
+    -fx-min-width: 36; -fx-min-height: 36;
+    -fx-max-width: 36; -fx-max-height: 36;
+    -fx-alignment: center;
+}
+.crud-avatar-text { -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; }
+.crud-badge { -fx-background-radius: 999; -fx-padding: 4 12; -fx-font-size: 12px; }
+.crud-badge-ok  { -fx-background-color: #d9f5e0; -fx-text-fill: #1f7a3a; }
+.crud-badge-off { -fx-background-color: #fde8e8; -fx-text-fill: #b4234a; }
+
+/* Hộp thoại: ô chọn, ô ngày, tiêu đề nhóm */
+.crud-dialog .combo-box-base {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: -crud-border;
+    -fx-border-radius: 8;
+}
+.crud-dialog .combo-box-base:focused { -fx-border-color: -crud-primary; }
+.crud-dialog .combo-box-base .text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 8 10;
+}
+.crud-dialog .radio-button { -fx-text-fill: -crud-text; }
+.crud-section-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -crud-primary;
+    -fx-padding: 6 0 0 0;
+}
