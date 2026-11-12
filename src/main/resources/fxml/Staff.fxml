@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="root" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.phonestore.gui.StaffController"
+      stylesheets="@../css/crud.css"
+      styleClass="crud-page" spacing="16"
+      prefWidth="1100" prefHeight="700">
+
+    <padding>
+        <Insets top="24" right="28" bottom="24" left="28"/>
+    </padding>
+
+    <!-- Tiêu đề + nút Thêm -->
+    <HBox alignment="CENTER_LEFT">
+        <VBox spacing="6" HBox.hgrow="ALWAYS">
+            <Label text="Quản lý nhân viên" styleClass="crud-page-title"/>
+            <Label text="Theo dõi, cập nhật thông tin và phân quyền hoạt động của đội ngũ nhân sự."
+                   styleClass="crud-page-subtitle"/>
+        </VBox>
+        <Button text="+  Thêm nhân viên" onAction="#handleAdd" styleClass="crud-primary-btn"/>
+    </HBox>
+
+    <!-- Thanh tìm kiếm + lọc + đếm -->
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <TextField fx:id="txtSearch" promptText="Tìm theo tên hoặc email"
+                   styleClass="crud-search" prefWidth="380"/>
+        <ComboBox fx:id="cboPosition" styleClass="crud-combo" prefWidth="240"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="lblCount" styleClass="crud-muted"/>
+    </HBox>
+
+    <!-- Thẻ bảng được controller thêm vào cuối VBox này -->
+</VBox>
