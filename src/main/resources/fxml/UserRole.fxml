@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="root" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.phonestore.gui.UserRoleController"
+      stylesheets="@../css/crud.css"
+      styleClass="crud-page" spacing="16"
+      prefWidth="1100" prefHeight="700">
+
+    <padding>
+        <Insets top="24" right="28" bottom="24" left="28"/>
+    </padding>
+
+    <VBox spacing="6">
+        <Label text="Quản lý tài khoản &amp; phân quyền" styleClass="crud-page-title"/>
+        <Label text="Gán vai trò, bật/tắt tài khoản và xem quyền của từng vai trò."
+               styleClass="crud-page-subtitle"/>
+    </VBox>
+
+    <!-- Tìm kiếm + lọc + đếm -->
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <TextField fx:id="txtSearch" promptText="Tìm theo tên, tên đăng nhập hoặc email"
+                   styleClass="crud-search" prefWidth="380"/>
+        <ComboBox fx:id="cboRoleFilter" styleClass="crud-combo" prefWidth="220"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="lblCount" styleClass="crud-muted"/>
+    </HBox>
+
+    <!-- Bên trái: bảng tài khoản (controller thêm vào). Bên phải: xem quyền của vai trò -->
+    <HBox fx:id="body" spacing="20" VBox.vgrow="ALWAYS">
+        <VBox styleClass="crud-panel" prefWidth="300" minWidth="300" maxWidth="300" spacing="12">
+            <Label text="QUYỀN CỦA VAI TRÒ" styleClass="crud-title"/>
+            <ComboBox fx:id="cboPermRole" styleClass="crud-combo" maxWidth="Infinity"/>
+            <Label fx:id="lblRoleDesc" styleClass="crud-muted" wrapText="true"/>
+            <VBox fx:id="permList" spacing="0"/>
+            <Label fx:id="lblPermCount" styleClass="crud-muted"/>
+        </VBox>
+    </HBox>
+</VBox>

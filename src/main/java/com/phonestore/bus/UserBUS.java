@@ -1,5 +1,9 @@
 package com.phonestore.bus;
 
+import java.sql.SQLException;
+import java.util.List;
+import java.util.regex.Pattern;
+
 import com.phonestore.dao.PermissionDAO;
 import com.phonestore.dao.RoleDAO;
 import com.phonestore.dao.UserDAO;
@@ -9,10 +13,6 @@ import com.phonestore.dto.UserDTO;
 import com.phonestore.exception.BusinessException;
 import com.phonestore.util.PasswordUtil;
 import com.phonestore.util.PermissionNames;
-
-import java.sql.SQLException;
-import java.util.List;
-import java.util.regex.Pattern;
 
 public class UserBUS {
 
@@ -166,5 +166,35 @@ public class UserBUS {
         u.setFullName(u.getFullName().trim());
         u.setEmail(u.getEmail().trim());
         u.setPhone(u.getPhone().trim());
+    }
+
+        // =====================================================================
+    // STT 30: đổi vai trò của tài khoản
+    // =====================================================================
+
+    /** Đổi vai trò của một tài khoản. Không cho tự đổi vai trò của chính mình. */
+    public void changeRole(int userId, int newRoleId) {
+        authBUS.requirePermission(PermissionNames.MANAGE_USERS);
+        if (userId <= 0) {
+            throw new BusinessException("Mã người dùng không hợp lệ");
+        }
+        if (newRoleId <= 0 || roleDAO.findById(newRoleId) == null) {
+            throw new BusinessException("Vai trò không tồn tại");
+        }
+        UserDTO me = authBUS.getCurrentUser();
+        if (me != null && me.getUserId() == userId) {
+            throw new BusinessException("Bạn không thể tự đổi vai trò của chính mình");
+        }
+        UserDTO user = userDAO.findById(userId);
+        if (user == null) {
+            throw new BusinessException("Không tìm thấy tài khoản cần đổi vai trò");
+        }
+        if (user.getRoleId() != null && user.getRoleId() == newRoleId) {
+            throw new BusinessException("Tài khoản này đang ở vai trò đó rồi");
+        }
+        user.setRoleId(newRoleId);
+        if (!userDAO.update(user)) {
+            throw new BusinessException("Không thể đổi vai trò. Vui lòng thử lại.");
+        }
     }
 }

@@ -214,3 +214,37 @@
     -fx-text-fill: -crud-primary;
     -fx-padding: 6 0 0 0;
 }
+/* ===== STT 30: huy hiệu vai trò, dòng phụ, khung xem quyền ===== */
+.crud-role-admin    { -fx-background-color: #ead9f5; -fx-text-fill: #5b2a86; }
+.crud-role-manager  { -fx-background-color: #dce8fb; -fx-text-fill: #1f4f9e; }
+.crud-role-staff    { -fx-background-color: #d9f5e0; -fx-text-fill: #1f7a3a; }
+.crud-role-customer { -fx-background-color: #f1eaee; -fx-text-fill: #6b5a64; }
+.crud-role-other    { -fx-background-color: #fdf0d5; -fx-text-fill: #8a5a00; }
+
+.crud-name-sub { -fx-font-size: 12px; -fx-text-fill: -crud-muted; }
+.crud-self-tag {
+    -fx-background-color: -crud-head;
+    -fx-background-radius: 999;
+    -fx-text-fill: -crud-primary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 1 8;
+}
+
+.perm-row {
+    -fx-padding: 8 0;
+    -fx-border-color: transparent transparent -crud-border transparent;
+}
+.perm-mark {
+    -fx-min-width: 22; -fx-min-height: 22;
+    -fx-max-width: 22; -fx-max-height: 22;
+    -fx-background-radius: 999;
+    -fx-alignment: center;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+.perm-mark-on  { -fx-background-color: #d9f5e0; -fx-text-fill: #1f7a3a; }
+.perm-mark-off { -fx-background-color: #f1eaee; -fx-text-fill: #a89aa3; }
+.perm-text     { -fx-font-size: 13px; -fx-text-fill: -crud-text; }
+.perm-text-off { -fx-font-size: 13px; -fx-text-fill: -crud-muted; }
+.perm-code     { -fx-font-size: 11px; -fx-text-fill: -crud-muted; }
