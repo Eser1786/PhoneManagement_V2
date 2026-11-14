@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Chỉ là vùng nội dung. Sidebar + thanh trên cùng do MainLayout lo. -->
+<ScrollPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.phonestore.gui.ReportController"
+            styleClass="rep-scroll" stylesheets="@../css/report.css"
+            fitToWidth="true" hbarPolicy="NEVER">
+    <content>
+        <VBox styleClass="rep-page" spacing="20">
+
+            <HBox alignment="CENTER_LEFT">
+                <VBox spacing="4">
+                    <Label styleClass="rep-title" text="Báo cáo thống kê"/>
+                    <Label fx:id="rangeLabel" styleClass="rep-subtitle" text="Chọn khoảng thời gian rồi bấm Áp dụng"/>
+                </VBox>
+            </HBox>
+
+            <!-- Bộ lọc thời gian -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label styleClass="rep-field-label" text="Từ ngày"/>
+                <DatePicker fx:id="fromDate" styleClass="rep-date" prefWidth="160"/>
+                <Label styleClass="rep-field-label" text="Đến ngày"/>
+                <DatePicker fx:id="toDate" styleClass="rep-date" prefWidth="160"/>
+                <Button fx:id="applyBtn" styleClass="rep-primary-btn" text="Áp dụng" onAction="#onApply"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="statusLabel" styleClass="rep-status"/>
+            </HBox>
+
+            <!-- 3 thẻ tổng -->
+            <GridPane hgap="16">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="33.3"/>
+                    <ColumnConstraints percentWidth="33.3"/>
+                    <ColumnConstraints percentWidth="33.4"/>
+                </columnConstraints>
+                <VBox styleClass="rep-card" spacing="6" GridPane.columnIndex="0">
+                    <Label styleClass="rep-card-title" text="TỔNG DOANH THU"/>
+                    <Label fx:id="totalRevenue" styleClass="rep-card-value" text="0 ₫"/>
+                </VBox>
+                <VBox styleClass="rep-card" spacing="6" GridPane.columnIndex="1">
+                    <Label styleClass="rep-card-title" text="TỔNG LỢI NHUẬN"/>
+                    <Label fx:id="totalProfit" styleClass="rep-card-value" text="0 ₫"/>
+                </VBox>
+                <VBox styleClass="rep-card" spacing="6" GridPane.columnIndex="2">
+                    <Label styleClass="rep-card-title" text="SỐ ĐƠN"/>
+                    <Label fx:id="totalOrders" styleClass="rep-card-value" text="0"/>
+                </VBox>
+            </GridPane>
+
+            <!-- Doanh thu + lợi nhuận -->
+            <GridPane hgap="16">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="55"/>
+                    <ColumnConstraints percentWidth="45"/>
+                </columnConstraints>
+                <VBox styleClass="rep-card" spacing="8" GridPane.columnIndex="0">
+                    <Label styleClass="rep-section-title" text="Doanh thu theo ngày"/>
+                    <Label styleClass="rep-section-sub" text="Đơn vị: triệu đồng"/>
+                    <LineChart fx:id="revenueChart" styleClass="rep-chart" prefHeight="280"
+                               legendVisible="false" animated="false">
+                        <xAxis><CategoryAxis/></xAxis>
+                        <yAxis><NumberAxis/></yAxis>
+                    </LineChart>
+                </VBox>
+                <VBox styleClass="rep-card" spacing="8" GridPane.columnIndex="1">
+                    <Label styleClass="rep-section-title" text="Lợi nhuận theo ngày"/>
+                    <Label styleClass="rep-section-sub" text="Lợi nhuận = (giá bán − giá vốn) × số lượng, đơn vị: triệu đồng"/>
+                    <BarChart fx:id="profitChart" styleClass="rep-chart" prefHeight="280"
+                              legendVisible="false" animated="false">
+                        <xAxis><CategoryAxis/></xAxis>
+                        <yAxis><NumberAxis/></yAxis>
+                    </BarChart>
+                </VBox>
+            </GridPane>
+
+            <!-- Tỷ trọng theo hãng + top sản phẩm -->
+            <GridPane hgap="16">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="40"/>
+                    <ColumnConstraints percentWidth="60"/>
+                </columnConstraints>
+                <VBox styleClass="rep-card" spacing="8" GridPane.columnIndex="0">
+                    <Label styleClass="rep-section-title" text="Tỷ trọng doanh thu theo hãng"/>
+                    <PieChart fx:id="brandChart" styleClass="rep-chart" prefHeight="300"
+                              legendVisible="true" animated="false" labelsVisible="false"/>
+                </VBox>
+                <VBox styleClass="rep-card" spacing="10" GridPane.columnIndex="1">
+                    <Label styleClass="rep-section-title" text="Top sản phẩm bán chạy"/>
+                    <TableView fx:id="topTable" styleClass="rep-table" prefHeight="300">
+                        <columns>
+                            <TableColumn fx:id="colTopName" text="SẢN PHẨM"  prefWidth="280" sortable="false"/>
+                            <TableColumn fx:id="colTopQty"  text="ĐÃ BÁN"    prefWidth="80"  sortable="false"/>
+                            <TableColumn fx:id="colTopRev"  text="DOANH THU" prefWidth="140" sortable="false"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </GridPane>
+
+            <!-- Tồn kho -->
+            <VBox styleClass="rep-card" spacing="10">
+                <Label styleClass="rep-section-title" text="Tồn kho thấp"/>
+                <TableView fx:id="stockTable" styleClass="rep-table" prefHeight="260">
+                    <columns>
+                        <TableColumn fx:id="colStockName"   text="SẢN PHẨM"   prefWidth="420" sortable="false"/>
+                        <TableColumn fx:id="colStockQty"    text="TỒN KHO"    prefWidth="100" sortable="false"/>
+                        <TableColumn fx:id="colStockStatus" text="TRẠNG THÁI" prefWidth="130" sortable="false"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </VBox>
+    </content>
+</ScrollPane>
