@@ -76,7 +76,7 @@ public class MainLayoutController {
 
     private void applyRolePermissions() {
         // Chỉ lọc quyền khi đã đăng nhập thực tế và có tập quyền trong SessionManager
-        if (!SessionManager.isLoggedIn() || SessionManager.getPermissions().isEmpty()) {
+        if (!SessionManager.isLoggedIn()) {
             return;
         }
         setButtonVisibility(btnSales, PermissionNames.PROCESS_ORDERS);
