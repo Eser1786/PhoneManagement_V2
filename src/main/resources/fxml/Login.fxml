@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
+
+<HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.phonestore.gui.LoginController"
+      stylesheets="@../css/login.css"
+      prefWidth="1000" prefHeight="640">
+
+    <!-- ===== BÊN TRÁI: thương hiệu ===== -->
+    <StackPane styleClass="brand-panel" minWidth="500" prefWidth="500" maxWidth="500">
+        <VBox alignment="CENTER" spacing="20">
+            <HBox alignment="CENTER" spacing="16">
+                <StackPane styleClass="brand-logo-box">
+                    <Label text="T" styleClass="brand-logo-letter"/>
+                </StackPane>
+                <Label text="TÊN SHOP" styleClass="brand-name"/>
+            </HBox>
+            <Label text="Quản lý cửa hàng điện thoại&#10;gọn gàng, rõ ràng" styleClass="brand-tagline"/>
+        </VBox>
+    </StackPane>
+
+    <!-- ===== BÊN PHẢI: form đăng nhập ===== -->
+    <StackPane styleClass="form-panel" HBox.hgrow="ALWAYS">
+        <VBox styleClass="login-card" prefWidth="420" maxWidth="-Infinity" maxHeight="-Infinity" spacing="10">
+
+            <Label text="Đăng nhập" styleClass="login-title"/>
+            <Label text="Vui lòng đăng nhập để truy cập hệ thống quản trị."
+                   styleClass="login-subtitle" wrapText="true"/>
+
+            <!-- Tên đăng nhập -->
+            <Label text="Tên đăng nhập" styleClass="field-label"/>
+            <StackPane alignment="CENTER_LEFT">
+                <TextField fx:id="txtUsername" promptText="Nhập email hoặc tên đăng nhập" styleClass="input-user"/>
+                <SVGPath styleClass="icon" mouseTransparent="true" scaleX="0.8" scaleY="0.8"
+                         content="M4 21 Q4 15 12 15 Q20 15 20 21 M12 3 A4 4 0 1 0 12 11 A4 4 0 1 0 12 3 Z">
+                    <StackPane.margin><Insets left="12"/></StackPane.margin>
+                </SVGPath>
+            </StackPane>
+
+            <!-- Mật khẩu: 2 ô chồng lên nhau (ẩn/hiện), nút con mắt nằm bên phải -->
+            <Label text="Mật khẩu" styleClass="field-label"/>
+            <StackPane alignment="CENTER_RIGHT">
+                <PasswordField fx:id="txtPassword" promptText="Nhập mật khẩu" styleClass="input-pass"/>
+                <TextField fx:id="txtPasswordVisible" promptText="Nhập mật khẩu" styleClass="input-pass"
+                           visible="false" managed="false"/>
+                <Button onAction="#handleTogglePassword" styleClass="icon-button" focusTraversable="false">
+                    <graphic>
+                        <SVGPath fx:id="eyeIcon" styleClass="icon" scaleX="0.8" scaleY="0.8"/>
+                    </graphic>
+                    <StackPane.margin><Insets right="6"/></StackPane.margin>
+                </Button>
+            </StackPane>
+
+            <!-- Ô báo lỗi (mặc định ẩn) -->
+            <HBox fx:id="errorBox" styleClass="error-box" alignment="CENTER_LEFT" spacing="8"
+                  visible="false" managed="false">
+                <Label text="!" styleClass="error-icon"/>
+                <Label fx:id="lblError" styleClass="error-text" wrapText="true"/>
+            </HBox>
+
+            <HBox alignment="CENTER_LEFT">
+                <CheckBox text="Ghi nhớ đăng nhập" styleClass="remember"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Hyperlink text="Quên mật khẩu?" onAction="#handleForgotPassword" styleClass="forgot-link"/>
+            </HBox>
+
+            <Button text="Đăng nhập" onAction="#handleLogin" defaultButton="true"
+                    maxWidth="Infinity" styleClass="btn-login"/>
+        </VBox>
+    </StackPane>
+</HBox>
