@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Pagination?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootView" stylesheets="@../css/style.css"
+           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.phonestore.gui.ProductController">
+
+    <!-- VÙNG NỘI DUNG CHÍNH (DANH SÁCH & BỘ LỌC) -->
+    <VBox spacing="18.0" styleClass="page-container">
+        
+        <!-- Header: Tiêu đề + Nút thêm -->
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <VBox spacing="2.0">
+                <Label styleClass="page-title" text="Quản lý sản phẩm" />
+                <Label styleClass="page-subtitle" text="Quản lý danh sách, thông tin, giá bán và tồn kho sản phẩm." />
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#onOpenAddModal" styleClass="app-btn-primary" text="+ Thêm sản phẩm" />
+        </HBox>
+
+        <!-- Thanh tìm kiếm & Bộ lọc -->
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <TextField fx:id="txtSearch" prefWidth="280.0" promptText="Tìm theo tên hoặc mã sản phẩm..." styleClass="app-input" />
+            <ComboBox fx:id="cbBrandFilter" prefWidth="150.0" promptText="Tất cả hãng" styleClass="app-combo" />
+            <ComboBox fx:id="cbCategoryFilter" prefWidth="160.0" promptText="Tất cả danh mục" styleClass="app-combo" />
+            <ComboBox fx:id="cbPriceFilter" prefWidth="160.0" promptText="Khoảng giá" styleClass="app-combo" />
+            <ComboBox fx:id="cbStatusFilter" prefWidth="160.0" promptText="Tất cả trạng thái" styleClass="app-combo" />
+            <Button onAction="#onResetFilter" styleClass="app-btn-outline" text="Đặt lại" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="lblTotalItems" styleClass="page-subtitle" text="0 sản phẩm" />
+        </HBox>
+
+        <!-- Bảng danh sách sản phẩm -->
+        <TableView fx:id="tblProducts" styleClass="app-table" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colIndex" prefWidth="55.0" text="STT" />
+                <TableColumn fx:id="colCode" prefWidth="105.0" text="Mã SP" />
+                <TableColumn fx:id="colName" prefWidth="290.0" text="Tên sản phẩm" />
+                <TableColumn fx:id="colBrand" prefWidth="110.0" text="Hãng" />
+                <TableColumn fx:id="colCategory" prefWidth="120.0" text="Danh mục" />
+                <TableColumn fx:id="colPrice" prefWidth="125.0" text="Giá bán" />
+                <TableColumn fx:id="colCostPrice" prefWidth="125.0" text="Giá vốn" />
+                <TableColumn fx:id="colStock" prefWidth="90.0" text="Tồn kho" />
+                <TableColumn fx:id="colStatus" prefWidth="120.0" text="Trạng thái" />
+                <TableColumn fx:id="colActions" prefWidth="165.0" text="Thao tác" />
+            </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+            </columnResizePolicy>
+        </TableView>
+
+        <!-- Phân trang -->
+        <HBox alignment="CENTER_RIGHT">
+            <Pagination fx:id="pagination" maxPageIndicatorCount="7" pageCount="1" />
+        </HBox>
+    </VBox>
+
+    <!-- FORM DIALOG THÊM / SỬA SẢN PHẨM (MODAL POPUP) -->
+    <StackPane fx:id="modalOverlay" style="-fx-background-color: rgba(0, 0, 0, 0.45);" visible="false">
+        <VBox maxHeight="720.0" maxWidth="750.0" spacing="14.0" styleClass="app-card">
+            
+            <HBox alignment="CENTER_LEFT">
+                <Label fx:id="lblModalTitle" styleClass="dash-section-title" text="Thêm sản phẩm mới" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button onAction="#onCloseModal" styleClass="app-btn-outline" text="✕" />
+            </HBox>
+
+            <VBox spacing="10.0">
+                <!-- Thông tin cơ bản -->
+                <Label styleClass="dash-card-title" text="THÔNG TIN CHUNG" />
+                <HBox spacing="12.0">
+                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                        <Label styleClass="user-role" text="Tên sản phẩm *" />
+                        <TextField fx:id="txtFormName" promptText="VD: iPhone 15 Pro Max" styleClass="app-input" />
+                    </VBox>
+                    <VBox prefWidth="200.0" spacing="4.0">
+                        <Label styleClass="user-role" text="Hãng *" />
+                        <ComboBox fx:id="cbFormBrand" maxWidth="Infinity" styleClass="app-combo" />
+                    </VBox>
+                    <VBox prefWidth="200.0" spacing="4.0">
+                        <Label styleClass="user-role" text="Danh mục *" />
+                        <ComboBox fx:id="cbFormCategory" maxWidth="Infinity" styleClass="app-combo" />
+                    </VBox>
+                </HBox>
+
+                <!-- Cấu hình Specs & Giá -->
+                <Label styleClass="dash-card-title" text="CẤU HÌNH &amp; GIÁ BÁN" />
+                <HBox spacing="12.0">
+                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                        <Label styleClass="user-role" text="RAM" />
+                        <TextField fx:id="txtFormRam" promptText="VD: 8GB" styleClass="app-input" />
+                    </VBox>
+                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                        <Label styleClass="user-role" text="Bộ nhớ trong" />
+                        <TextField fx:id="txtFormStorage" promptText="VD: 256GB" styleClass="app-input" />
+                    </VBox>
+                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                        <Label styleClass="user-role" text="Màu sắc" />
+                        <TextField fx:id="txtFormColor" promptText="VD: Titan tự nhiên" styleClass="app-input" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="12.0">
+                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                        <Label styleClass="user-role" text="Giá bán (₫) *" />
+                        <TextField fx:id="txtFormPrice" promptText="VD: 29990000" styleClass="app-input" />
+                    </VBox>
+                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                        <Label styleClass="user-role" text="Giá vốn (₫) *" />
+                        <TextField fx:id="txtFormCostPrice" promptText="VD: 27500000" styleClass="app-input" />
+                    </VBox>
+                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                        <Label styleClass="user-role" text="Tồn kho *" />
+                        <TextField fx:id="txtFormStock" promptText="VD: 20" styleClass="app-input" />
+                    </VBox>
+                    <VBox prefWidth="180.0" spacing="4.0">
+                        <Label styleClass="user-role" text="Trạng thái" />
+                        <ComboBox fx:id="cbFormStatus" maxWidth="Infinity" styleClass="app-combo" />
+                    </VBox>
+                </HBox>
+
+                <!-- Mô tả thêm -->
+                <VBox spacing="4.0">
+                    <Label styleClass="user-role" text="Mô tả sản phẩm" />
+                    <TextArea fx:id="txtFormDescription" prefRowCount="3" promptText="Nhập mô tả sản phẩm..." styleClass="app-input" />
+                </VBox>
+            </VBox>
+
+            <!-- Nút hành động form -->
+            <HBox alignment="CENTER_RIGHT" spacing="12.0">
+                <Button onAction="#onCloseModal" styleClass="app-btn-outline" text="Hủy" />
+                <Button onAction="#onSaveProduct" styleClass="app-btn-primary" text="Lưu sản phẩm" />
+            </HBox>
+        </VBox>
+    </StackPane>
+
+</StackPane>
