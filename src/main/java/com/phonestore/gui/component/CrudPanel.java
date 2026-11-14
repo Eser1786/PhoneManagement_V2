@@ -252,23 +252,40 @@ public class CrudPanel<T> extends VBox {
         table.getColumns().add(col);
     }
 
-    /** Cột THAO TÁC với hai nút Sửa, Xóa. */
+       /** Cột THAO TÁC với hai nút Sửa, Xóa. */
     public void addActionColumn(double width) {
+        addActionColumn(width, true, true);
+    }
+
+    /** Như trên nhưng chọn nút nào được hiện (dùng để ẩn theo quyền). */
+    public void addActionColumn(double width, boolean showEdit, boolean showDelete) {
         addNodeColumn("THAO TÁC", width, item -> {
-            Button edit = new Button("Sửa");
-            Button delete = new Button("Xóa");
-            edit.getStyleClass().add("crud-btn-outline");
-            delete.getStyleClass().addAll("crud-btn-outline", "crud-btn-danger");
-            edit.setOnAction(e -> {
-                if (onEdit != null) onEdit.accept(item);
-            });
-            delete.setOnAction(e -> {
-                if (onDelete != null) onDelete.accept(item);
-            });
-            HBox box = new HBox(6, edit, delete);
+            HBox box = new HBox(6);
             box.setAlignment(Pos.CENTER_LEFT);
+            if (showEdit) {
+                Button edit = new Button("Sửa");
+                edit.getStyleClass().add("crud-btn-outline");
+                edit.setOnAction(e -> {
+                    if (onEdit != null) onEdit.accept(item);
+                });
+                box.getChildren().add(edit);
+            }
+            if (showDelete) {
+                Button delete = new Button("Xóa");
+                delete.getStyleClass().addAll("crud-btn-outline", "crud-btn-danger");
+                delete.setOnAction(e -> {
+                    if (onDelete != null) onDelete.accept(item);
+                });
+                box.getChildren().add(delete);
+            }
             return box;
         });
+    }
+
+      /** Ẩn/hiện nút Thêm (dùng để ẩn theo quyền). */
+    public void setAddVisible(boolean visible) {
+        addButton.setVisible(visible);
+        addButton.setManaged(visible);
     }
 
     // ---------- lọc + phân trang ----------
