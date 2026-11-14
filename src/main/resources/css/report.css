@@ -1,0 +1,82 @@
+/* report.css - riêng cho màn Báo cáo thống kê (Thảo). Mọi class bắt đầu bằng "rep-". */
+
+.rep-scroll, .rep-page {
+    -rep-primary: #4a1d3f;
+    -rep-primary-hover: #63294f;
+    -rep-bg: #f8f4f6;
+    -rep-head: #f3e4eb;
+    -rep-border: #eadce3;
+    -rep-text: #2b1b26;
+    -rep-muted: #8a7480;
+    -fx-font-family: "Inter", "Segoe UI", "System";
+    -fx-font-size: 13px;
+}
+.rep-scroll {
+    -fx-background: #f8f4f6; -fx-background-color: #f8f4f6;
+    -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
+}
+.rep-scroll > .viewport { -fx-background-color: #f8f4f6; }
+.rep-page { -fx-background-color: -rep-bg; -fx-padding: 28 32 28 32; }
+
+.rep-title { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: -rep-text; }
+.rep-subtitle { -fx-font-size: 12.5px; -fx-text-fill: -rep-muted; }
+.rep-field-label { -fx-text-fill: -rep-muted; }
+.rep-status { -fx-text-fill: -rep-muted; -fx-font-size: 12px; }
+.rep-status-error { -fx-text-fill: #b4234a; }
+
+.rep-primary-btn {
+    -fx-background-color: -rep-primary; -fx-text-fill: white; -fx-font-weight: bold;
+    -fx-background-radius: 8; -fx-padding: 9 18 9 18; -fx-cursor: hand;
+}
+.rep-primary-btn:hover { -fx-background-color: -rep-primary-hover; }
+.rep-primary-btn:disabled { -fx-opacity: 0.6; }
+
+.rep-date .text-field {
+    -fx-background-color: white; -fx-border-color: -rep-border; -fx-border-radius: 8; -fx-background-radius: 8;
+}
+
+/* ---------- Thẻ ---------- */
+.rep-card {
+    -fx-background-color: white; -fx-border-color: -rep-border; -fx-border-radius: 12;
+    -fx-background-radius: 12; -fx-padding: 18;
+}
+.rep-card-title { -fx-font-size: 12.5px; -fx-text-fill: -rep-muted; -fx-font-weight: bold; }
+.rep-card-value { -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: -rep-text; }
+.rep-section-title { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: -rep-text; }
+.rep-section-sub { -fx-font-size: 12px; -fx-text-fill: -rep-muted; }
+
+/* ---------- Biểu đồ ---------- */
+.rep-chart { -fx-background-color: transparent; }
+.rep-chart .chart-plot-background { -fx-background-color: transparent; }
+.rep-chart .chart-vertical-grid-lines { -fx-stroke: transparent; }
+.rep-chart .chart-horizontal-grid-lines { -fx-stroke: #f0e6eb; }
+.rep-chart .axis { -fx-tick-label-fill: -rep-muted; -fx-font-size: 11px; }
+.rep-chart .default-color0.chart-series-line { -fx-stroke: -rep-primary; -fx-stroke-width: 2.5px; }
+.rep-chart .default-color0.chart-line-symbol { -fx-background-color: -rep-primary, white; }
+.rep-chart .default-color0.chart-bar { -fx-bar-fill: #a23b72; }
+.rep-chart .default-color0.chart-pie { -fx-pie-color: #4a1d3f; }
+.rep-chart .default-color1.chart-pie { -fx-pie-color: #a23b72; }
+.rep-chart .default-color2.chart-pie { -fx-pie-color: #d98cb0; }
+.rep-chart .default-color3.chart-pie { -fx-pie-color: #e8b4c8; }
+.rep-chart .default-color4.chart-pie { -fx-pie-color: #8a7480; }
+.rep-chart .chart-legend { -fx-background-color: transparent; }
+
+/* ---------- Bảng ---------- */
+.rep-table { -fx-background-color: transparent; -fx-padding: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; }
+.rep-table .column-header-background, .rep-table .column-header, .rep-table .filler {
+    -fx-background-color: -rep-head; -fx-border-color: transparent;
+}
+.rep-table .column-header .label {
+    -fx-text-fill: -rep-muted; -fx-font-size: 11.5px; -fx-font-weight: bold; -fx-alignment: CENTER_LEFT;
+}
+.rep-table .table-row-cell {
+    -fx-cell-size: 42px; -fx-background-color: white;
+    -fx-border-color: transparent transparent #f2e8ed transparent;
+}
+.rep-table .table-row-cell:hover { -fx-background-color: #fcf7fa; }
+.rep-table .table-cell { -fx-alignment: CENTER_LEFT; -fx-text-fill: -rep-text; -fx-padding: 0 8 0 8; }
+.rep-table .placeholder .label { -fx-text-fill: -rep-muted; }
+
+.rep-badge { -fx-background-radius: 999; -fx-padding: 3 10 3 10; -fx-font-size: 11.5px; -fx-font-weight: bold; }
+.rep-badge-red    { -fx-background-color: #fde6ec; -fx-text-fill: #b4234a; }
+.rep-badge-yellow { -fx-background-color: #fff3d6; -fx-text-fill: #9a6700; }

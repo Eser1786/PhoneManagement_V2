@@ -1,9 +1,19 @@
 package com.phonestore.gui;
 
-import com.phonestore.util.FormatUtil;
+import com.phonestore.bus.OrderBUS;
+import com.phonestore.bus.ReportBUS;
+import com.phonestore.dto.DashboardSummaryDTO;
+import com.phonestore.dto.OrderFilter;
+import com.phonestore.dto.OrderListItemDTO;
+import com.phonestore.dto.ProductListItemDTO;
+import com.phonestore.dto.RevenuePointDTO;
+import com.phonestore.dto.TopProductDTO;
+import com.phonestore.exception.BusinessException;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
@@ -11,10 +21,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.Pane;
 
 import java.math.BigDecimal;
 import java.net.URL;
 import java.text.Normalizer;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -26,14 +38,20 @@ import java.util.function.Function;
 
 /**
  * Màn hình Tổng quan (Dashboard.fxml).
- *
- * Quy ước 3 lớp của nhóm: GUI chỉ gọi BUS. Hiện chưa có ReportBUS/ReportDAO nên dữ liệu
- * lấy từ hàm loadData() ở cuối file (dữ liệu mẫu). Khi có ReportBUS, chỉ cần sửa hàm đó,
- * phần giao diện giữ nguyên.
+ * Dữ liệu từ ReportBUS (getDashboardSummary, getRevenueByDay, getTopProducts, getLowStock)
+ * và OrderBUS (searchOrders cho đơn gần đây). Chạy trong Task nền.
+ * Lưu ý: ReportBUS yêu cầu quyền view_reports.
  */
 public class DashboardController implements Initializable {
 
+    private static final int LOW_STOCK_THRESHOLD = 5;
+    private static final String DB_ERROR =
+            "Không kết nối được cơ sở dữ liệu. Hãy chạy \"docker compose up -d\" rồi bấm Làm mới.";
+
+    private static final NumberFormat MONEY = NumberFormat.getInstance(Locale.forLanguageTag("vi-VN"));
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("dd/MM");
+    private static final DateTimeFormatter FULL = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    static { MONEY.setMaximumFractionDigits(0); }
 
     // ---------- Thành phần trong Dashboard.fxml ----------
     @FXML private Label dateLabel;
@@ -66,6 +84,10 @@ public class DashboardController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupTables();
+        // BE chưa có "khách mới theo ngày" -> thẻ này hiển thị TỔNG khách hàng.
+        relabelCard(customersValue, "TỔNG KHÁCH HÀNG");
+        customersHint.setText("Khách hàng đã đăng ký");
+        lowStockHint.setText("Tồn kho từ " + LOW_STOCK_THRESHOLD + " trở xuống");
         refresh();
     }
 
@@ -75,13 +97,39 @@ public class DashboardController implements Initializable {
     }
 
     private void refresh() {
-        DashboardData data = loadData();
-        dateLabel.setText("Tình hình kinh doanh hôm nay, " + FormatUtil.formatDate(LocalDate.now()));
-        fillCards(data);
-        fillRevenueChart(data.revenueLast7Days());
-        fillTopChart(data.topProducts());
-        lowStockTable.getItems().setAll(data.lowStock());
-        recentTable.getItems().setAll(data.recentOrders());
+        dateLabel.setText("Đang tải dữ liệu...");
+        Task<DashboardData> task = new Task<>() {
+            @Override protected DashboardData call() {
+                return loadData();
+            }
+        };
+        task.setOnSucceeded(e -> {
+            DashboardData data = task.getValue();
+            dateLabel.setText("Tình hình kinh doanh hôm nay, " + LocalDate.now().format(FULL));
+            fillCards(data);
+            fillRevenueChart(data.revenueLast7Days());
+            fillTopChart(data.topProducts());
+            lowStockTable.getItems().setAll(data.lowStock());
+            recentTable.getItems().setAll(data.recentOrders());
+        });
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            dateLabel.setText(ex instanceof BusinessException && ex.getMessage() != null ? ex.getMessage() : DB_ERROR);
+        });
+        Thread t = new Thread(task, "dashboard-loader");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /** Đổi chữ tiêu đề của thẻ chứa label giá trị (không cần sửa FXML). */
+    private void relabelCard(Label valueLabel, String title) {
+        if (valueLabel.getParent() instanceof Pane card) {
+            for (Node n : card.getChildren()) {
+                if (n instanceof Label l && l.getStyleClass().contains("dash-card-title")) {
+                    l.setText(title);
+                }
+            }
+        }
     }
 
     // =====================================================================
@@ -94,7 +142,7 @@ public class DashboardController implements Initializable {
         ordersValue.setText(String.valueOf(d.ordersToday()));
         setHint(ordersHint, d.ordersToday(), d.ordersYesterday());
 
-        customersValue.setText(String.valueOf(d.newCustomersToday()));
+        customersValue.setText(String.valueOf(d.totalCustomers()));
 
         lowStockValue.setText(String.valueOf(d.lowStockCount()));
         lowStockValue.getStyleClass().remove("dash-card-value-danger");
@@ -119,7 +167,6 @@ public class DashboardController implements Initializable {
     private void fillRevenueChart(List<DayRevenue> days) {
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         for (DayRevenue d : days) {
-            // đổi sang triệu đồng cho trục dễ đọc
             series.getData().add(new XYChart.Data<>(d.date().format(DAY), d.revenue().doubleValue() / 1_000_000.0));
         }
         revenueChart.getData().setAll(List.of(series));
@@ -182,10 +229,10 @@ public class DashboardController implements Initializable {
         });
     }
 
-    /** Xanh = hoàn thành, đỏ = hủy, vàng = còn lại (chờ xử lý/đang giao). Chỉnh khi biết giá trị order_status thật. */
+    /** Trạng thái thật của BE: Chờ xử lý / Đang giao / Hoàn thành / Đã hủy. */
     private static String statusClass(String status) {
         String s = normalize(status);
-        if (s.contains("hoan thanh") || s.contains("da giao")) return "dash-badge-green";
+        if (s.contains("hoan thanh")) return "dash-badge-green";
         if (s.contains("huy")) return "dash-badge-red";
         return "dash-badge-yellow";
     }
@@ -202,20 +249,12 @@ public class DashboardController implements Initializable {
     }
 
     private static String formatMoney(BigDecimal amount) {
-        return FormatUtil.formatCurrency(amount);
+        return MONEY.format(amount == null ? BigDecimal.ZERO : amount) + " ₫";
     }
 
     // =====================================================================
-    //  DỮ LIỆU TẠM  ←  thay bằng ReportBUS khi BE có
-    //
-    //  Dự kiến ReportBUS cần cung cấp (xem tin nhắn gửi bạn BE):
-    //   - tổng hợp theo ngày: doanh thu, số đơn, khách mới, số sản phẩm sắp hết (hôm nay + hôm qua)
-    //   - doanh thu từng ngày trong khoảng [từ, đến]
-    //   - top sản phẩm bán chạy trong khoảng ngày
-    //   - danh sách sản phẩm sắp hết hàng
-    //   - các đơn gần nhất kèm tên khách
+    //  KẾT NỐI BUS
     // =====================================================================
-
     public record DayRevenue(LocalDate date, BigDecimal revenue) { }
 
     public record TopProduct(String name, int quantity) { }
@@ -226,48 +265,71 @@ public class DashboardController implements Initializable {
 
     public record DashboardData(BigDecimal revenueToday, BigDecimal revenueYesterday,
                                 int ordersToday, int ordersYesterday,
-                                int newCustomersToday, int lowStockCount,
+                                int totalCustomers, int lowStockCount,
                                 List<DayRevenue> revenueLast7Days,
                                 List<TopProduct> topProducts,
                                 List<LowStockRow> lowStock,
                                 List<RecentOrderRow> recentOrders) { }
 
-    private static BigDecimal vnd(long v) {
-        return BigDecimal.valueOf(v);
+    private static BigDecimal nz(BigDecimal v) {
+        return v == null ? BigDecimal.ZERO : v;
     }
 
-    /** TODO: gọi ReportBUS (và bắt BusinessException). */
+    /** Chạy ở thread nền: KHÔNG chạm vào control JavaFX trong hàm này. */
     private DashboardData loadData() {
+        ReportBUS report = new ReportBUS();
+        OrderBUS orders = new OrderBUS();
+
         LocalDate today = LocalDate.now();
-        long[] revenue = {42_300_000, 55_800_000, 38_900_000, 71_200_000, 64_500_000, 79_900_000, 86_450_000};
+        LocalDate from = today.minusDays(6);
+
+        DashboardSummaryDTO summary = report.getDashboardSummary();
+
+        // BUS điền đủ các ngày (ngày không có đơn = 0), thứ tự tăng dần theo ngày.
+        List<RevenuePointDTO> points = report.getRevenueByDay(from, today);
         List<DayRevenue> days = new ArrayList<>();
-        for (int i = 0; i < revenue.length; i++) {
-            days.add(new DayRevenue(today.minusDays(revenue.length - 1 - i), vnd(revenue[i])));
+        for (int i = 0; i < points.size(); i++) {
+            days.add(new DayRevenue(from.plusDays(i), nz(points.get(i).getRevenue())));
+        }
+        BigDecimal revenueYesterday = BigDecimal.ZERO;
+        int ordersYesterday = 0;
+        if (points.size() >= 2) {
+            RevenuePointDTO y = points.get(points.size() - 2);
+            revenueYesterday = nz(y.getRevenue());
+            ordersYesterday = y.getOrderCount();
+        }
+
+        List<TopProduct> top = new ArrayList<>();
+        for (TopProductDTO p : report.getTopProducts(from, today, 5)) {
+            top.add(new TopProduct(label(p.getProductName(), p.getStorage(), p.getColor()), p.getQuantitySold()));
+        }
+
+        List<LowStockRow> low = new ArrayList<>();
+        for (ProductListItemDTO p : report.getLowStock(LOW_STOCK_THRESHOLD)) {
+            low.add(new LowStockRow(label(p.getProductName(), p.getStorage(), p.getColor()), p.getStockQuantity()));
+        }
+
+        // searchOrders trả đơn mới nhất trước; lấy 6 dòng đầu
+        List<RecentOrderRow> recent = new ArrayList<>();
+        for (OrderListItemDTO o : orders.searchOrders(new OrderFilter())) {
+            if (recent.size() >= 6) break;
+            String customer = o.getCustomerName() == null || o.getCustomerName().isBlank()
+                    ? "Khách lẻ" : o.getCustomerName();
+            recent.add(new RecentOrderRow(o.getOrderId(), customer, nz(o.getTotalAmount()),
+                    o.getOrderStatus() == null ? "" : o.getOrderStatus()));
         }
 
         return new DashboardData(
-                vnd(86_450_000), vnd(79_900_000),
-                14, 12,
-                5, 7,
-                days,
-                List.of(
-                        new TopProduct("iPhone 15 Pro Max 256GB", 18),
-                        new TopProduct("Galaxy S24 Ultra 512GB", 14),
-                        new TopProduct("Xiaomi 14 12GB/256GB", 11),
-                        new TopProduct("OPPO Reno11 F 8GB/256GB", 9),
-                        new TopProduct("vivo V30 12GB/256GB", 7)),
-                List.of(
-                        new LowStockRow("iPhone 15 Pro Max 256GB - Titan tự nhiên", 2),
-                        new LowStockRow("Galaxy S24 Ultra 512GB - Đen", 3),
-                        new LowStockRow("Xiaomi 14 12GB/256GB - Trắng", 1),
-                        new LowStockRow("OPPO Reno11 F 8GB/256GB - Xanh", 0),
-                        new LowStockRow("vivo V30 12GB/256GB - Tím", 4)),
-                List.of(
-                        new RecentOrderRow(1014, "Nguyễn Văn An", vnd(29_990_000), "Hoàn thành"),
-                        new RecentOrderRow(1013, "Trần Thị Bích", vnd(14_490_000), "Đang giao"),
-                        new RecentOrderRow(1012, "Lê Hoàng Cường", vnd(8_990_000), "Chờ xử lý"),
-                        new RecentOrderRow(1011, "Phạm Ngọc Dung", vnd(33_990_000), "Hoàn thành"),
-                        new RecentOrderRow(1010, "Võ Quốc Em", vnd(6_490_000), "Đã hủy"),
-                        new RecentOrderRow(1009, "Nguyễn Văn An", vnd(12_990_000), "Hoàn thành")));
+                nz(summary.getRevenueToday()), revenueYesterday,
+                summary.getOrdersToday(), ordersYesterday,
+                summary.getTotalCustomers(), summary.getLowStockCount(),
+                days, top, low, recent);
+    }
+
+    private static String label(String name, String storage, String color) {
+        StringBuilder sb = new StringBuilder(name == null ? "" : name);
+        if (storage != null && !storage.isBlank()) sb.append(' ').append(storage);
+        if (color != null && !color.isBlank()) sb.append(" - ").append(color);
+        return sb.toString();
     }
 }
