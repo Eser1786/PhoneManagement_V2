@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
+import java.util.function.Predicate;
 
 /** Khung "tiêu đề + nút Thêm + tìm kiếm + bảng + phân trang" dùng chung cho các màn CRUD. */
 public class CrudPanel<T> extends VBox {
@@ -35,12 +37,18 @@ public class CrudPanel<T> extends VBox {
     private final TableView<T> table = new TableView<>();
     private final TextField searchField = new TextField();
     private final Button addButton = new Button();
+    private final HBox header;
+    private final HBox footer;
     private final Label pageInfo = new Label();
+    private final HBox pager = new HBox(6);
     private final Button prevBtn = new Button("‹");
     private final Button nextBtn = new Button("›");
 
     private List<T> allItems = new ArrayList<>();
     private int currentPage = 1;
+    private boolean numberedPager = false;
+    private Predicate<T> extraFilter = item -> true;
+    private IntConsumer onCountChanged;
 
     private Consumer<T> onEdit;
     private Consumer<T> onDelete;
@@ -66,7 +74,7 @@ public class CrudPanel<T> extends VBox {
         addButton.getStyleClass().add("crud-primary-btn");
         Region spacer1 = new Region();
         HBox.setHgrow(spacer1, Priority.ALWAYS);
-        HBox header = new HBox(titleLabel, spacer1, addButton);
+        header = new HBox(titleLabel, spacer1, addButton);
         header.setAlignment(Pos.CENTER_LEFT);
 
         // Ô tìm kiếm
@@ -96,10 +104,12 @@ public class CrudPanel<T> extends VBox {
             refresh();
         });
         pageInfo.getStyleClass().add("crud-muted");
+        pager.setAlignment(Pos.CENTER_RIGHT);
         Region spacer2 = new Region();
         HBox.setHgrow(spacer2, Priority.ALWAYS);
-        HBox footer = new HBox(8, pageInfo, spacer2, prevBtn, nextBtn);
+        footer = new HBox(8, pageInfo, spacer2, pager);
         footer.setAlignment(Pos.CENTER_LEFT);
+        footer.getStyleClass().add("crud-footer");
 
         getChildren().addAll(header, searchField, table, footer);
     }
@@ -122,6 +132,60 @@ public class CrudPanel<T> extends VBox {
     public void setItems(List<T> items) {
         allItems = new ArrayList<>(items);
         refresh();
+    }
+
+    // ---------- tùy chọn giao diện (mới) ----------
+
+    /** Ẩn/hiện hàng tiêu đề + nút Thêm (khi trang tự vẽ tiêu đề riêng). */
+    public void setHeaderVisible(boolean visible) {
+        header.setVisible(visible);
+        header.setManaged(visible);
+    }
+
+    /** Ẩn/hiện ô tìm kiếm bên trong (khi trang tự vẽ ô tìm kiếm riêng, dùng setKeyword). */
+    public void setSearchVisible(boolean visible) {
+        searchField.setVisible(visible);
+        searchField.setManaged(visible);
+    }
+
+    /** Thẻ liền: bảng sát mép thẻ, chân trang có đệm riêng. */
+    public void setFlat(boolean flat) {
+        setSpacing(flat ? 0 : 14);
+        if (flat) {
+            if (!getStyleClass().contains("crud-flat")) getStyleClass().add("crud-flat");
+        } else {
+            getStyleClass().remove("crud-flat");
+        }
+    }
+
+    /** true: hiện nút số trang (1, 2, 3...), false: chỉ có nút trước/sau. */
+    public void setNumberedPager(boolean numbered) {
+        this.numberedPager = numbered;
+        refresh();
+    }
+
+    public void setRowHeight(double height) {
+        table.setFixedCellSize(height);
+    }
+
+    /** Từ khóa tìm kiếm do bên ngoài cung cấp. */
+    public void setKeyword(String keyword) {
+        searchField.setText(keyword == null ? "" : keyword);
+    }
+
+    /** Bộ lọc thêm (ví dụ lọc theo chức vụ). Gọi applyFilter() mỗi khi điều kiện lọc đổi. */
+    public void setExtraFilter(Predicate<T> filter) {
+        this.extraFilter = filter == null ? item -> true : filter;
+    }
+
+    public void applyFilter() {
+        currentPage = 1;
+        refresh();
+    }
+
+    /** Được gọi mỗi lần danh sách sau lọc thay đổi, tham số là số dòng sau lọc. */
+    public void setOnCountChanged(IntConsumer listener) {
+        this.onCountChanged = listener;
     }
 
     // ---------- các loại cột ----------
@@ -172,7 +236,7 @@ public class CrudPanel<T> extends VBox {
         table.getColumns().add(col);
     }
 
-    /** Cột chứa một thành phần giao diện bất kỳ (ví dụ logo, huy hiệu trạng thái). */
+    /** Cột chứa một thành phần giao diện bất kỳ (logo, avatar, huy hiệu trạng thái...). */
     public void addNodeColumn(String header, double width, Function<T, Node> factory) {
         TableColumn<T, T> col = new TableColumn<>(header);
         col.setPrefWidth(width);
@@ -188,23 +252,40 @@ public class CrudPanel<T> extends VBox {
         table.getColumns().add(col);
     }
 
-    /** Cột THAO TÁC với hai nút Sửa, Xóa. */
+       /** Cột THAO TÁC với hai nút Sửa, Xóa. */
     public void addActionColumn(double width) {
+        addActionColumn(width, true, true);
+    }
+
+    /** Như trên nhưng chọn nút nào được hiện (dùng để ẩn theo quyền). */
+    public void addActionColumn(double width, boolean showEdit, boolean showDelete) {
         addNodeColumn("THAO TÁC", width, item -> {
-            Button edit = new Button("Sửa");
-            Button delete = new Button("Xóa");
-            edit.getStyleClass().add("crud-btn-outline");
-            delete.getStyleClass().addAll("crud-btn-outline", "crud-btn-danger");
-            edit.setOnAction(e -> {
-                if (onEdit != null) onEdit.accept(item);
-            });
-            delete.setOnAction(e -> {
-                if (onDelete != null) onDelete.accept(item);
-            });
-            HBox box = new HBox(6, edit, delete);
+            HBox box = new HBox(6);
             box.setAlignment(Pos.CENTER_LEFT);
+            if (showEdit) {
+                Button edit = new Button("Sửa");
+                edit.getStyleClass().add("crud-btn-outline");
+                edit.setOnAction(e -> {
+                    if (onEdit != null) onEdit.accept(item);
+                });
+                box.getChildren().add(edit);
+            }
+            if (showDelete) {
+                Button delete = new Button("Xóa");
+                delete.getStyleClass().addAll("crud-btn-outline", "crud-btn-danger");
+                delete.setOnAction(e -> {
+                    if (onDelete != null) onDelete.accept(item);
+                });
+                box.getChildren().add(delete);
+            }
             return box;
         });
+    }
+
+      /** Ẩn/hiện nút Thêm (dùng để ẩn theo quyền). */
+    public void setAddVisible(boolean visible) {
+        addButton.setVisible(visible);
+        addButton.setManaged(visible);
     }
 
     // ---------- lọc + phân trang ----------
@@ -213,7 +294,9 @@ public class CrudPanel<T> extends VBox {
         String keyword = normalize(searchField.getText());
         List<T> filtered = new ArrayList<>();
         for (T item : allItems) {
-            if (keyword.isEmpty() || normalize(searchText.apply(item)).contains(keyword)) {
+            boolean matchKeyword = keyword.isEmpty()
+                    || normalize(searchText.apply(item)).contains(keyword);
+            if (matchKeyword && extraFilter.test(item)) {
                 filtered.add(item);
             }
         }
@@ -230,8 +313,34 @@ public class CrudPanel<T> extends VBox {
         pageInfo.setText(total == 0
                 ? "Không có " + itemName
                 : "Hiển thị " + (from + 1) + "–" + to + " trong tổng số " + total + " " + itemName);
+        buildPager(totalPages);
+
+        if (onCountChanged != null) onCountChanged.accept(total);
+    }
+
+    private void buildPager(int totalPages) {
+        pager.getChildren().clear();
         prevBtn.setDisable(currentPage <= 1);
         nextBtn.setDisable(currentPage >= totalPages);
+        pager.getChildren().add(prevBtn);
+
+        if (numberedPager) {
+            // Hiện tối đa 7 nút số quanh trang hiện tại
+            int end = Math.min(totalPages, Math.max(1, currentPage - 3) + 6);
+            int start = Math.max(1, end - 6);
+            for (int p = start; p <= end; p++) {
+                final int page = p;
+                Button b = new Button(String.valueOf(p));
+                b.getStyleClass().add("crud-page-btn");
+                if (p == currentPage) b.getStyleClass().add("crud-page-btn-active");
+                b.setOnAction(e -> {
+                    currentPage = page;
+                    refresh();
+                });
+                pager.getChildren().add(b);
+            }
+        }
+        pager.getChildren().add(nextBtn);
     }
 
     // Bỏ dấu và chữ hoa để gõ "ap" vẫn tìm ra "Áp"

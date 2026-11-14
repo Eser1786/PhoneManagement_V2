@@ -32,6 +32,8 @@ import javafx.scene.shape.Circle;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Supplier;
+import com.phonestore.bus.AuthBUS;
+import com.phonestore.util.PermissionNames;
 
 public class BrandCategoryController {
 
@@ -39,6 +41,7 @@ public class BrandCategoryController {
 
     private final BrandBUS brandBUS = new BrandBUS();
     private final CategoryBUS categoryBUS = new CategoryBUS();
+    private final AuthBUS authBUS = new AuthBUS();
 
     @FXML private HBox panels;
 
@@ -69,11 +72,18 @@ public class BrandCategoryController {
                 "Tìm kiếm thương hiệu...", "thương hiệu", 6,
                 b -> b.getBrandName() + " " + nz(b.getCountry()) + " " + nz(b.getDescription()));
 
-        brandPanel.addIndexColumn(50);
-        brandPanel.addNodeColumn("LOGO", 60, this::buildLogo);
-        brandPanel.addTextColumn("TÊN THƯƠNG HIỆU", 130, BrandDTO::getBrandName);
-        brandPanel.addTextColumn("MÔ TẢ", 200, b -> nz(b.getDescription()));
-        brandPanel.addActionColumn(120);
+        brandPanel.getStyleClass().add("brand-panel");
+        brandPanel.addIndexColumn(36);
+        brandPanel.addNodeColumn("LOGO", 54, this::buildLogo);
+        brandPanel.addTextColumn("THƯƠNG HIỆU", 110, BrandDTO::getBrandName);
+        brandPanel.addTextColumn("MÔ TẢ", 130, b -> nz(b.getDescription()));
+        
+        boolean canEdit = authBUS.hasPermission(PermissionNames.EDIT_PRODUCT);
+        boolean canDelete = authBUS.hasPermission(PermissionNames.DELETE_PRODUCT);
+        brandPanel.setAddVisible(authBUS.hasPermission(PermissionNames.ADD_PRODUCT));
+        if (canEdit || canDelete) {
+            brandPanel.addActionColumn(120, canEdit, canDelete);
+        }
 
         brandPanel.setOnAdd(() -> showBrandForm(null));
         brandPanel.setOnEdit(this::showBrandForm);
@@ -162,7 +172,13 @@ public class BrandCategoryController {
         categoryPanel.addIndexColumn(50);
         categoryPanel.addTextColumn("TÊN DANH MỤC", 150, CategoryDTO::getCategoryName);
         categoryPanel.addTextColumn("MÔ TẢ", 200, c -> nz(c.getDescription()));
-        categoryPanel.addActionColumn(120);
+        
+        boolean canEdit = authBUS.hasPermission(PermissionNames.EDIT_PRODUCT);
+        boolean canDelete = authBUS.hasPermission(PermissionNames.DELETE_PRODUCT);
+        categoryPanel.setAddVisible(authBUS.hasPermission(PermissionNames.ADD_PRODUCT));
+        if (canEdit || canDelete) {
+            categoryPanel.addActionColumn(120, canEdit, canDelete);
+        }
 
         categoryPanel.setOnAdd(() -> showCategoryForm(null));
         categoryPanel.setOnEdit(this::showCategoryForm);

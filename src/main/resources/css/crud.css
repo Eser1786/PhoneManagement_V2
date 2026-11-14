@@ -99,6 +99,10 @@
 .crud-btn-danger { -fx-border-color: -crud-danger; -fx-text-fill: -crud-danger; }
 .crud-btn-danger:hover { -fx-background-color: #fde8ee; }
 
+/* Giữ đủ nhãn nút và tiêu đề trong bảng thương hiệu có nhiều cột. */
+.brand-panel .crud-btn-outline { -fx-padding: 3 5; -fx-font-size: 11px; }
+.brand-panel .crud-table .column-header .label { -fx-font-size: 11px; }
+
 /* ===== Nút phân trang ===== */
 .crud-page-btn {
     -fx-background-color: white;
@@ -155,3 +159,92 @@
     -fx-text-fill: -crud-danger;
     -fx-padding: 8 12;
 }
+/* ===== STT 25: thẻ bảng liền, nút trang hiện tại, ô chọn, avatar, huy hiệu ===== */
+.crud-panel.crud-flat { -fx-padding: 0; }
+.crud-flat .crud-table .column-header-background { -fx-background-radius: 16 16 0 0; }
+.crud-flat .crud-footer { -fx-padding: 12 20; }
+
+.crud-page-btn-active {
+    -fx-background-color: -crud-primary;
+    -fx-border-color: -crud-primary;
+    -fx-text-fill: white;
+}
+.crud-page-btn-active:hover { -fx-background-color: -crud-primary-hover; }
+
+/* Ô chọn lọc ngoài trang */
+.crud-combo {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: -crud-border;
+    -fx-border-radius: 8;
+    -fx-pref-height: 38;
+}
+.crud-combo:focused { -fx-border-color: -crud-primary; }
+.crud-combo .list-cell { -fx-text-fill: -crud-text; -fx-padding: 0 4 0 8; }
+
+/* Avatar tròn + huy hiệu trạng thái (màu avatar được đặt trong code) */
+.crud-avatar {
+    -fx-background-radius: 999;
+    -fx-min-width: 36; -fx-min-height: 36;
+    -fx-max-width: 36; -fx-max-height: 36;
+    -fx-alignment: center;
+}
+.crud-avatar-text { -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; }
+.crud-badge { -fx-background-radius: 999; -fx-padding: 4 12; -fx-font-size: 12px; }
+.crud-badge-ok  { -fx-background-color: #d9f5e0; -fx-text-fill: #1f7a3a; }
+.crud-badge-off { -fx-background-color: #fde8e8; -fx-text-fill: #b4234a; }
+
+/* Hộp thoại: ô chọn, ô ngày, tiêu đề nhóm */
+.crud-dialog .combo-box-base {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: -crud-border;
+    -fx-border-radius: 8;
+}
+.crud-dialog .combo-box-base:focused { -fx-border-color: -crud-primary; }
+.crud-dialog .combo-box-base .text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 8 10;
+}
+.crud-dialog .radio-button { -fx-text-fill: -crud-text; }
+.crud-section-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -crud-primary;
+    -fx-padding: 6 0 0 0;
+}
+/* ===== STT 30: huy hiệu vai trò, dòng phụ, khung xem quyền ===== */
+.crud-role-admin    { -fx-background-color: #ead9f5; -fx-text-fill: #5b2a86; }
+.crud-role-manager  { -fx-background-color: #dce8fb; -fx-text-fill: #1f4f9e; }
+.crud-role-staff    { -fx-background-color: #d9f5e0; -fx-text-fill: #1f7a3a; }
+.crud-role-customer { -fx-background-color: #f1eaee; -fx-text-fill: #6b5a64; }
+.crud-role-other    { -fx-background-color: #fdf0d5; -fx-text-fill: #8a5a00; }
+
+.crud-name-sub { -fx-font-size: 12px; -fx-text-fill: -crud-muted; }
+.crud-self-tag {
+    -fx-background-color: -crud-head;
+    -fx-background-radius: 999;
+    -fx-text-fill: -crud-primary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 1 8;
+}
+
+.perm-row {
+    -fx-padding: 8 0;
+    -fx-border-color: transparent transparent -crud-border transparent;
+}
+.perm-mark {
+    -fx-min-width: 22; -fx-min-height: 22;
+    -fx-max-width: 22; -fx-max-height: 22;
+    -fx-background-radius: 999;
+    -fx-alignment: center;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+.perm-mark-on  { -fx-background-color: #d9f5e0; -fx-text-fill: #1f7a3a; }
+.perm-mark-off { -fx-background-color: #f1eaee; -fx-text-fill: #a89aa3; }
+.perm-text     { -fx-font-size: 13px; -fx-text-fill: -crud-text; }
+.perm-text-off { -fx-font-size: 13px; -fx-text-fill: -crud-muted; }
+.perm-code     { -fx-font-size: 11px; -fx-text-fill: -crud-muted; }
