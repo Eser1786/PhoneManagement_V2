@@ -1,13 +1,13 @@
 package com.phonestore.bus;
 
+import java.util.List;
+
 import com.phonestore.dao.InventoryDAO;
 import com.phonestore.dto.InventoryDTO;
 import com.phonestore.dto.ProductSpecDTO;
 import com.phonestore.exception.BusinessException;
 import com.phonestore.exception.OutOfStockException;
 import com.phonestore.util.PermissionNames;
-
-import java.util.List;
 
 public class InventoryBUS {
 
