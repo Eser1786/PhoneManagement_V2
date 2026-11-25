@@ -1,11 +1,13 @@
 package com.phonestore.gui;
 
+import com.phonestore.bus.AuthBUS;
 import com.phonestore.bus.BrandBUS;
 import com.phonestore.bus.CategoryBUS;
 import com.phonestore.dto.BrandDTO;
 import com.phonestore.dto.CategoryDTO;
 import com.phonestore.exception.BusinessException;
 import com.phonestore.gui.component.CrudPanel;
+import com.phonestore.util.PermissionNames;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -31,17 +33,23 @@ import javafx.scene.shape.Circle;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.Supplier;
-import com.phonestore.bus.AuthBUS;
-import com.phonestore.util.PermissionNames;
 
 public class BrandCategoryController {
 
     private static final String DB_ERROR = "Không kết nối được cơ sở dữ liệu. Vui lòng thử lại.";
+    private static final String BRAND_IMAGE_DIR = "images/brands/";
 
     private final BrandBUS brandBUS = new BrandBUS();
     private final CategoryBUS categoryBUS = new CategoryBUS();
     private final AuthBUS authBUS = new AuthBUS();
+    private final Map<String, Image> brandLogoCache = new HashMap<>();
 
     @FXML private HBox panels;
 
@@ -77,7 +85,7 @@ public class BrandCategoryController {
         brandPanel.addNodeColumn("LOGO", 54, this::buildLogo);
         brandPanel.addTextColumn("THƯƠNG HIỆU", 110, BrandDTO::getBrandName);
         brandPanel.addTextColumn("MÔ TẢ", 130, b -> nz(b.getDescription()));
-        
+
         boolean canEdit = authBUS.hasPermission(PermissionNames.EDIT_PRODUCT);
         boolean canDelete = authBUS.hasPermission(PermissionNames.DELETE_PRODUCT);
         brandPanel.setAddVisible(authBUS.hasPermission(PermissionNames.ADD_PRODUCT));
@@ -91,6 +99,7 @@ public class BrandCategoryController {
     }
 
     private void reloadBrands() {
+        brandLogoCache.clear();
         try {
             brandPanel.setItems(brandBUS.getAllBrands());
         } catch (BusinessException e) {
@@ -110,7 +119,7 @@ public class BrandCategoryController {
         TextArea desc = new TextArea(isEdit ? nz(existing.getDescription()) : "");
         name.setPromptText("Ví dụ: Apple");
         country.setPromptText("Ví dụ: Mỹ");
-        logo.setPromptText("Không bắt buộc, ví dụ: images/brands/apple.png");
+        logo.setPromptText("Tùy chọn, ví dụ: images/brands/apple.png");
         desc.setPromptText("Mô tả ngắn về thương hiệu");
         desc.setPrefRowCount(3);
         desc.setWrapText(true);
@@ -172,7 +181,7 @@ public class BrandCategoryController {
         categoryPanel.addIndexColumn(50);
         categoryPanel.addTextColumn("TÊN DANH MỤC", 150, CategoryDTO::getCategoryName);
         categoryPanel.addTextColumn("MÔ TẢ", 200, c -> nz(c.getDescription()));
-        
+
         boolean canEdit = authBUS.hasPermission(PermissionNames.EDIT_PRODUCT);
         boolean canDelete = authBUS.hasPermission(PermissionNames.DELETE_PRODUCT);
         categoryPanel.setAddVisible(authBUS.hasPermission(PermissionNames.ADD_PRODUCT));
@@ -256,12 +265,13 @@ public class BrandCategoryController {
         box.setMinSize(size, size);
         box.setMaxSize(size, size);
 
-        Image img = loadLogo(brand.getLogoUrl());
+        Image img = resolveBrandLogo(brand);
         if (img != null) {
             ImageView view = new ImageView(img);
             view.setFitWidth(size);
             view.setFitHeight(size);
             view.setPreserveRatio(true);
+            view.setSmooth(true);
             view.setClip(new Circle(size / 2, size / 2, size / 2));
             box.getChildren().add(view);
         } else {
@@ -275,8 +285,44 @@ public class BrandCategoryController {
         return box;
     }
 
+    private Image resolveBrandLogo(BrandDTO brand) {
+        if (brand == null) return null;
+        String cacheKey = brand.getBrandId() + "|" + nz(brand.getLogoUrl()) + "|" + nz(brand.getBrandName());
+        if (brandLogoCache.containsKey(cacheKey)) {
+            return brandLogoCache.get(cacheKey);
+        }
+
+        List<String> candidates = new ArrayList<>();
+        String explicitPath = nz(brand.getLogoUrl()).trim();
+        if (!explicitPath.isBlank()) {
+            String clean = explicitPath.startsWith("/") ? explicitPath.substring(1) : explicitPath;
+            candidates.add(clean);
+            if (!clean.contains("/")) {
+                candidates.add(BRAND_IMAGE_DIR + clean);
+            }
+        }
+
+        String slug = toSlug(brand.getBrandName());
+        if (!slug.isBlank()) {
+            for (String ext : new String[]{".png", ".jpg", ".jpeg"}) {
+                candidates.add(BRAND_IMAGE_DIR + slug + ext);
+            }
+        }
+
+        for (String candidate : candidates) {
+            Image loaded = loadLogoFromResource(candidate);
+            if (loaded != null) {
+                brandLogoCache.put(cacheKey, loaded);
+                return loaded;
+            }
+        }
+
+        brandLogoCache.put(cacheKey, null);
+        return null;
+    }
+
     // logo_url là đường dẫn trong resources, ví dụ "images/brands/apple.png"
-    private Image loadLogo(String path) {
+    private Image loadLogoFromResource(String path) {
         if (path == null || path.isBlank()) return null;
         String p = path.trim();
         if (p.startsWith("/")) p = p.substring(1);
@@ -287,6 +333,15 @@ public class BrandCategoryController {
         } catch (IOException | RuntimeException e) {
             return null;
         }
+    }
+
+    private static String toSlug(String input) {
+        if (input == null || input.isBlank()) return "";
+        String normalized = Normalizer.normalize(input.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD);
+        return normalized
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-|-$", "");
     }
 
     // =====================================================
