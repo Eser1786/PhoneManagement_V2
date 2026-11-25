@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane stylesheets="@../css/style.css"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.phonestore.gui.ProductController">
+
+    <!-- Thanh tìm kiếm & bộ lọc phía trên -->
+    <top>
+        <VBox spacing="10.0" styleClass="page-container">
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <Label text="Quản lý sản phẩm &amp; cấu hình" styleClass="page-title" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button text="Làm mới" onAction="#onRefresh" styleClass="app-btn-secondary" />
+            </HBox>
+
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <TextField fx:id="txtSearch" prefWidth="220.0" promptText="Tìm tên sản phẩm..." styleClass="app-input" />
+                <ComboBox fx:id="cbBrandFilter" prefWidth="150.0" promptText="Tất cả hãng" styleClass="app-combo" />
+                <ComboBox fx:id="cbCategoryFilter" prefWidth="160.0" promptText="Tất cả danh mục" styleClass="app-combo" />
+                <ComboBox fx:id="cbStatusFilter" prefWidth="155.0" promptText="Tất cả trạng thái" styleClass="app-combo" />
+                <TextField fx:id="txtMinPrice" prefWidth="115.0" promptText="Giá từ" styleClass="app-input" />
+                <TextField fx:id="txtMaxPrice" prefWidth="115.0" promptText="Giá đến" styleClass="app-input" />
+                <Button text="Lọc" onAction="#onFilter" styleClass="app-btn-primary" />
+                <Button text="Xóa lọc" onAction="#onResetFilter" styleClass="app-btn-secondary" />
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- Nội dung chính chia 2 vùng: Bảng danh sách & Form thêm/sửa -->
+    <center>
+        <SplitPane dividerPositions="0.62" styleClass="main-split">
+            <padding>
+                <Insets top="8.0" right="14.0" bottom="14.0" left="14.0" />
+            </padding>
+
+            <!-- Trái: Danh sách sản phẩm / phiên bản -->
+            <VBox spacing="8.0">
+                <Label text="Danh sách sản phẩm &amp; phiên bản cấu hình" styleClass="dash-section-title" />
+                <TableView fx:id="tblProducts" styleClass="app-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colSpecId" prefWidth="70.0" text="Mã PB" />
+                        <TableColumn fx:id="colProductName" prefWidth="180.0" text="Tên sản phẩm" />
+                        <TableColumn fx:id="colBrand" prefWidth="105.0" text="Hãng" />
+                        <TableColumn fx:id="colCategory" prefWidth="110.0" text="Danh mục" />
+                        <TableColumn fx:id="colConfig" prefWidth="145.0" text="Cấu hình (RAM/ROM/Màu)" />
+                        <TableColumn fx:id="colPrice" prefWidth="115.0" text="Giá bán" />
+                        <TableColumn fx:id="colStock" prefWidth="75.0" text="Tồn" />
+                        <TableColumn fx:id="colStatus" prefWidth="115.0" text="Trạng thái" />
+                    </columns>
+                    <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                    </columnResizePolicy>
+                </TableView>
+            </VBox>
+
+            <!-- Phải: Form thông tin sản phẩm & cấu hình -->
+            <VBox spacing="10.0" styleClass="app-card">
+                <HBox alignment="CENTER_LEFT">
+                    <Label fx:id="lblFormTitle" text="Thêm sản phẩm mới" styleClass="dash-section-title" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="Form tạo mới" onAction="#onNewForm" styleClass="app-btn-secondary" />
+                </HBox>
+
+                <GridPane hgap="8.0" vgap="8.0">
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="105.0" prefWidth="115.0" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                    </columnConstraints>
+
+                    <Label text="Tên sản phẩm *:" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                    <TextField fx:id="txtProductName" promptText="VD: iPhone 16 Pro Max"
+                               styleClass="app-input" GridPane.rowIndex="0" GridPane.columnIndex="1" />
+
+                    <Label text="Hãng *:" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                    <ComboBox fx:id="cbFormBrand" maxWidth="Infinity" promptText="Chọn hãng"
+                              styleClass="app-combo" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+
+                    <Label text="Danh mục *:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <ComboBox fx:id="cbFormCategory" maxWidth="Infinity" promptText="Chọn danh mục"
+                              styleClass="app-combo" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+
+                    <Label text="Mô tả:" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+                    <TextArea fx:id="txtDescription" prefRowCount="2" promptText="Mô tả sản phẩm..."
+                              styleClass="app-input" GridPane.rowIndex="3" GridPane.columnIndex="1" />
+                </GridPane>
+
+                <Separator />
+                <Label text="Thông tin phiên bản cấu hình (ProductSpec)" styleClass="dash-card-title" />
+
+                <GridPane hgap="8.0" vgap="8.0">
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="105.0" prefWidth="115.0" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                        <ColumnConstraints minWidth="80.0" prefWidth="90.0" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                    </columnConstraints>
+
+                    <Label text="RAM *:" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                    <TextField fx:id="txtRam" promptText="VD: 8GB" styleClass="app-input"
+                               GridPane.rowIndex="0" GridPane.columnIndex="1" />
+
+                    <Label text="Bộ nhớ *:" GridPane.rowIndex="0" GridPane.columnIndex="2" />
+                    <TextField fx:id="txtStorage" promptText="VD: 256GB" styleClass="app-input"
+                               GridPane.rowIndex="0" GridPane.columnIndex="3" />
+
+                    <Label text="Màu sắc *:" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                    <TextField fx:id="txtColor" promptText="VD: Titan tự nhiên" styleClass="app-input"
+                               GridPane.rowIndex="1" GridPane.columnIndex="1" />
+
+                    <Label text="Trạng thái *:" GridPane.rowIndex="1" GridPane.columnIndex="2" />
+                    <ComboBox fx:id="cbSpecStatus" maxWidth="Infinity" styleClass="app-combo"
+                              GridPane.rowIndex="1" GridPane.columnIndex="3" />
+
+                    <Label text="Giá bán *:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <TextField fx:id="txtPrice" promptText="VD: 29990000" styleClass="app-input"
+                               GridPane.rowIndex="2" GridPane.columnIndex="1" />
+
+                    <Label text="Giá vốn *:" GridPane.rowIndex="2" GridPane.columnIndex="2" />
+                    <TextField fx:id="txtCostPrice" promptText="VD: 25000000" styleClass="app-input"
+                               GridPane.rowIndex="2" GridPane.columnIndex="3" />
+
+                    <Label text="Tồn kho đầu *:" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+                    <TextField fx:id="txtStock" promptText="VD: 10" styleClass="app-input"
+                               GridPane.rowIndex="3" GridPane.columnIndex="1" />
+
+                    <Label text="Màn hình *:" GridPane.rowIndex="3" GridPane.columnIndex="2" />
+                    <TextField fx:id="txtScreenSize" text="6.3 inch" styleClass="app-input"
+                               GridPane.rowIndex="3" GridPane.columnIndex="3" />
+
+                    <Label text="Chip *:" GridPane.rowIndex="4" GridPane.columnIndex="0" />
+                    <TextField fx:id="txtProcessor" text="Apple A18 Pro" styleClass="app-input"
+                               GridPane.rowIndex="4" GridPane.columnIndex="1" />
+
+                    <Label text="Độ phân giải *:" GridPane.rowIndex="4" GridPane.columnIndex="2" />
+                    <TextField fx:id="txtResolution" text="2622 x 1206" styleClass="app-input"
+                               GridPane.rowIndex="4" GridPane.columnIndex="3" />
+
+                    <Label text="Pin *:" GridPane.rowIndex="5" GridPane.columnIndex="0" />
+                    <TextField fx:id="txtBattery" text="4500 mAh" styleClass="app-input"
+                               GridPane.rowIndex="5" GridPane.columnIndex="1" />
+
+                    <Label text="HĐH *:" GridPane.rowIndex="5" GridPane.columnIndex="2" />
+                    <TextField fx:id="txtOs" text="iOS / Android" styleClass="app-input"
+                               GridPane.rowIndex="5" GridPane.columnIndex="3" />
+
+                    <Label text="Cam sau *:" GridPane.rowIndex="6" GridPane.columnIndex="0" />
+                    <TextField fx:id="txtCameraMain" text="48MP" styleClass="app-input"
+                               GridPane.rowIndex="6" GridPane.columnIndex="1" />
+
+                    <Label text="Cam trước *:" GridPane.rowIndex="6" GridPane.columnIndex="2" />
+                    <TextField fx:id="txtCameraFront" text="12MP" styleClass="app-input"
+                               GridPane.rowIndex="6" GridPane.columnIndex="3" />
+
+                    <Label text="Trọng lượng *:" GridPane.rowIndex="7" GridPane.columnIndex="0" />
+                    <TextField fx:id="txtWeight" text="199g" styleClass="app-input"
+                               GridPane.rowIndex="7" GridPane.columnIndex="1" />
+
+                    <Label text="Bảo hành *:" GridPane.rowIndex="7" GridPane.columnIndex="2" />
+                    <TextField fx:id="txtWarranty" text="12 tháng" styleClass="app-input"
+                               GridPane.rowIndex="7" GridPane.columnIndex="3" />
+                </GridPane>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <!-- Các nút thao tác -->
+                <VBox spacing="6.0">
+                    <HBox spacing="8.0">
+                        <Button text="Tạo SP mới" onAction="#onCreateProduct"
+                                styleClass="app-btn-primary" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                        <Button text="Thêm phiên bản" onAction="#onAddSpecToSelectedProduct"
+                                styleClass="app-btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                    </HBox>
+                    <HBox spacing="8.0">
+                        <Button text="Lưu cập nhật" onAction="#onUpdateSelected"
+                                styleClass="app-btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                        <Button text="Xóa phiên bản" onAction="#onDeleteSpec"
+                                styleClass="app-btn-danger-outline" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                        <Button text="Xóa sản phẩm" onAction="#onDeleteProduct"
+                                styleClass="app-btn-danger-outline" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                    </HBox>
+                </VBox>
+            </VBox>
+        </SplitPane>
+    </center>
+</BorderPane>
