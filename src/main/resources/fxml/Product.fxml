@@ -83,6 +83,10 @@
                         <Label fx:id="lblImageSlugHint" text="Tự động khớp theo tên SP trong /images/products/"
                                styleClass="app-muted" wrapText="true" />
                     </VBox>
+                <HBox alignment="CENTER_LEFT">
+                    <Label fx:id="lblFormTitle" text="Thêm sản phẩm mới" styleClass="dash-section-title" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="Form tạo mới" onAction="#onNewForm" styleClass="app-btn-secondary" />
                 </HBox>
 
                 <GridPane hgap="8.0" vgap="8.0">

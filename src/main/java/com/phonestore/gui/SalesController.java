@@ -5,6 +5,9 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -99,6 +102,8 @@ public class SalesController {
         cbCategoryFilter.setOnAction(e -> loadCatalogData());
         txtDiscountPercent.textProperty().addListener((obs, oldVal, newVal) -> updateCartTotal());
         txtCashPaid.textProperty().addListener((obs, oldVal, newVal) -> calculateChange());
+        txtDiscountPercent.textProperty().addListener((obs, o, n) -> updateCartTotal());
+        txtCashPaid.textProperty().addListener((obs, o, n) -> calculateChange());
         cbPaymentMethod.setOnAction(e -> calculateChange());
     }
 
@@ -161,6 +166,7 @@ public class SalesController {
             }
         });
 
+        });
         colCatPrice.setCellValueFactory(cellData ->
                 new ReadOnlyObjectWrapper<>(FormatUtil.formatCurrency(cellData.getValue().getPrice())));
         colCatPrice.setStyle("-fx-alignment: CENTER-RIGHT;");
@@ -179,6 +185,8 @@ public class SalesController {
                         ProductListItemDTO row = getTableView().getItems().get(getIndex());
                         addToCart(row);
                     }
+                    ProductListItemDTO row = getTableView().getItems().get(getIndex());
+                    addToCart(row);
                 });
             }
 
@@ -186,6 +194,7 @@ public class SalesController {
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                if (empty) {
                     setGraphic(null);
                 } else {
                     ProductListItemDTO row = getTableView().getItems().get(getIndex());
@@ -316,6 +325,7 @@ public class SalesController {
             List<CustomerDTO> customers = customerBUS.getAllCustomers();
             ObservableList<CustomerDTO> items = FXCollections.observableArrayList();
             items.add(null);
+            items.add(null); // đại diện cho Khách vãng lai
             items.addAll(customers);
             cbCustomer.setItems(items);
             cbCustomer.getSelectionModel().selectFirst();
@@ -324,6 +334,8 @@ public class SalesController {
                 public String toString(CustomerDTO c) {
                     if (c == null) return "Khách vãng lai";
                     return formatCustomerLabel(c);
+                    String label = formatCustomerLabel(c);
+                    return label;
                 }
 
                 @Override
@@ -332,6 +344,7 @@ public class SalesController {
                 }
             });
         } catch (BusinessException ignored) {
+            // Nếu tài khoản hiện tại chưa có quyền MANAGE_CUSTOMERS, vẫn cho bán khách vãng lai
             cbCustomer.setItems(FXCollections.observableArrayList((CustomerDTO) null));
             cbCustomer.getSelectionModel().selectFirst();
         } catch (Exception e) {
@@ -453,6 +466,7 @@ public class SalesController {
         if (lblSubTotal != null) {
             lblSubTotal.setText(FormatUtil.formatCurrency(net));
         }
+        lblSubTotal.setText(FormatUtil.formatCurrency(net));
         tblCart.refresh();
         calculateChange();
     }
@@ -481,6 +495,7 @@ public class SalesController {
         if (currentUser == null) {
             return null;
         }
+        // Nếu UserDTO có getStaffId() thì ưu tiên; nếu không thì dùng getUserId() nếu > 0
         for (String methodName : new String[]{"getStaffId", "getUserId", "getId"}) {
             try {
                 Method m = currentUser.getClass().getMethod(methodName);
@@ -522,6 +537,8 @@ public class SalesController {
                 : OrderBUS.PAYMENT_CASH;
 
         String paidStr = (txtCashPaid != null && txtCashPaid.getText() != null) ? txtCashPaid.getText().trim() : "";
+        // Kiểm tra tiền khách đưa nếu thanh toán tiền mặt hoặc có nhập số tiền
+        String paidStr = txtCashPaid.getText() == null ? "" : txtCashPaid.getText().trim();
         if (OrderBUS.PAYMENT_CASH.equals(paymentMethod) || !paidStr.isEmpty()) {
             if (paidStr.isEmpty()) {
                 AlertUtil.showWarning("Thiếu tiền thanh toán", "Vui lòng nhập số tiền khách đưa.");
@@ -561,6 +578,7 @@ public class SalesController {
                 details.add(d);
             }
 
+            // Đúng thứ tự tham số: createOrder(customerId, staffId, paymentMethod, notes, items)
             orderBUS.createOrder(customerId, staffId, paymentMethod, rawNote, details);
 
             AlertUtil.showInfo("Thành công", "Thanh toán và tạo hóa đơn thành công!");

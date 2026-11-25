@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.List;
 
 import com.phonestore.bus.ProductBUS;
 import com.phonestore.dto.LookupItem;
@@ -28,6 +31,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
@@ -155,6 +160,10 @@ public class ProductController {
             }
         });
 
+    }
+
+    private void setupTable() {
+        colSpecId.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getSpecId()));
         colProductName.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(safeStr(c.getValue().getProductName())));
         colBrand.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(safeStr(c.getValue().getBrandName())));
         colCategory.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(safeStr(c.getValue().getCategoryName())));
@@ -218,6 +227,7 @@ public class ProductController {
             List<LookupItem> categories = productBUS.getCategoryOptions();
 
             LookupItem allBrand = new LookupItem(0, "Tất cả hãng");
+            LookupItem allBrand = createAllOption("Tất cả hãng");
             ObservableList<LookupItem> brandFilterList = FXCollections.observableArrayList();
             brandFilterList.add(allBrand);
             brandFilterList.addAll(brands);
@@ -228,6 +238,7 @@ public class ProductController {
             if (!brands.isEmpty()) cbFormBrand.getSelectionModel().selectFirst();
 
             LookupItem allCat = new LookupItem(0, "Tất cả danh mục");
+            LookupItem allCat = createAllOption("Tất cả danh mục");
             ObservableList<LookupItem> catFilterList = FXCollections.observableArrayList();
             catFilterList.add(allCat);
             catFilterList.addAll(categories);
@@ -243,6 +254,9 @@ public class ProductController {
         }
     }
 
+    private LookupItem createAllOption(String label) {
+        return new LookupItem(0, label);
+    }
     private int getLookupId(LookupItem item) {
         if (item == null) return 0;
         return invokeInt(item, "getId", "getBrandId", "getCategoryId", "getValueId");
@@ -254,6 +268,8 @@ public class ProductController {
         loadLookupOptions();
         loadProducts();
         updatePreviewImage(txtProductName.getText());
+        loadLookupOptions();
+        loadProducts();
     }
 
     @FXML
@@ -438,6 +454,7 @@ public class ProductController {
     }
 
     @FXML
+  @FXML
     private void onDeleteSpec() {
         if (selectedSpecId == null || selectedSpecId <= 0) {
             AlertUtil.showWarning("Chưa chọn phiên bản", "Vui lòng chọn một phiên bản cấu hình để xóa.");
