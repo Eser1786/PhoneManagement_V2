@@ -1,13 +1,5 @@
 package com.phonestore.gui;
 
-import java.io.InputStream;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.text.Normalizer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,23 +19,12 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableCell;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.util.StringConverter;
 
 public class ProductController {
@@ -59,7 +40,6 @@ public class ProductController {
     // Bảng danh sách
     @FXML private TableView<ProductListItemDTO> tblProducts;
     @FXML private TableColumn<ProductListItemDTO, Integer> colSpecId;
-    @FXML private TableColumn<ProductListItemDTO, Void> colImage;
     @FXML private TableColumn<ProductListItemDTO, String> colProductName;
     @FXML private TableColumn<ProductListItemDTO, String> colBrand;
     @FXML private TableColumn<ProductListItemDTO, String> colCategory;
@@ -70,8 +50,6 @@ public class ProductController {
 
     // Form phải
     @FXML private Label lblFormTitle;
-    @FXML private ImageView imgProductPreview;
-    @FXML private Label lblImageSlugHint;
     @FXML private TextField txtProductName;
     @FXML private ComboBox<LookupItem> cbFormBrand;
     @FXML private ComboBox<LookupItem> cbFormCategory;
@@ -96,7 +74,6 @@ public class ProductController {
 
     private final ProductBUS productBUS = new ProductBUS();
     private final ObservableList<ProductListItemDTO> productRows = FXCollections.observableArrayList();
-    private final Map<String, Image> productImageCache = new HashMap<>();
 
     private Integer selectedProductId = null;
     private Integer selectedSpecId = null;
@@ -107,59 +84,12 @@ public class ProductController {
         setupFilterAndFormControls();
         loadLookupOptions();
         loadProducts();
-        updatePreviewImage(null);
 
         tblProducts.getSelectionModel().selectedItemProperty().addListener((obs, oldRow, newRow) -> {
             if (newRow != null) {
                 populateFormFromRow(newRow);
             }
         });
-
-        txtProductName.textProperty().addListener((obs, oldVal, newVal) -> updatePreviewImage(newVal));
-    }
-
-    private void setupTable() {
-        tblProducts.setFixedCellSize(50.0);
-        colSpecId.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getSpecId()));
-
-        colImage.setCellFactory(col -> new TableCell<>() {
-            private final ImageView imageView = new ImageView();
-            private final StackPane box = new StackPane(imageView);
-
-            {
-                double size = 42.0;
-                imageView.setFitWidth(size);
-                imageView.setFitHeight(size);
-                imageView.setPreserveRatio(true);
-                imageView.setSmooth(true);
-
-                Rectangle clip = new Rectangle(size, size);
-                clip.setArcWidth(8.0);
-                clip.setArcHeight(8.0);
-                imageView.setClip(clip);
-
-                box.setMinSize(size, size);
-                box.setPrefSize(size, size);
-                box.setMaxSize(size, size);
-                box.setAlignment(Pos.CENTER);
-                setAlignment(Pos.CENTER);
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
-                    setGraphic(null);
-                    setText(null);
-                } else {
-                    ProductListItemDTO row = getTableView().getItems().get(getIndex());
-                    imageView.setImage(getProductThumbnail(row != null ? row.getProductName() : null));
-                    setGraphic(box);
-                    setText(null);
-                }
-            }
-        });
-
     }
 
     private void setupTable() {
@@ -194,13 +124,6 @@ public class ProductController {
         cbSpecStatus.setItems(FXCollections.observableArrayList(ProductStatuses.ALL));
         cbSpecStatus.getSelectionModel().selectFirst();
 
-        if (imgProductPreview != null) {
-            Rectangle clip = new Rectangle(64.0, 64.0);
-            clip.setArcWidth(10.0);
-            clip.setArcHeight(10.0);
-            imgProductPreview.setClip(clip);
-        }
-
         StringConverter<LookupItem> lookupConverter = new StringConverter<>() {
             @Override
             public String toString(LookupItem item) {
@@ -226,7 +149,6 @@ public class ProductController {
             List<LookupItem> brands = productBUS.getBrandOptions();
             List<LookupItem> categories = productBUS.getCategoryOptions();
 
-            LookupItem allBrand = new LookupItem(0, "Tất cả hãng");
             LookupItem allBrand = createAllOption("Tất cả hãng");
             ObservableList<LookupItem> brandFilterList = FXCollections.observableArrayList();
             brandFilterList.add(allBrand);
@@ -237,7 +159,6 @@ public class ProductController {
             cbFormBrand.setItems(FXCollections.observableArrayList(brands));
             if (!brands.isEmpty()) cbFormBrand.getSelectionModel().selectFirst();
 
-            LookupItem allCat = new LookupItem(0, "Tất cả danh mục");
             LookupItem allCat = createAllOption("Tất cả danh mục");
             ObservableList<LookupItem> catFilterList = FXCollections.observableArrayList();
             catFilterList.add(allCat);
@@ -264,10 +185,6 @@ public class ProductController {
 
     @FXML
     private void onRefresh() {
-        productImageCache.clear();
-        loadLookupOptions();
-        loadProducts();
-        updatePreviewImage(txtProductName.getText());
         loadLookupOptions();
         loadProducts();
     }
@@ -335,8 +252,6 @@ public class ProductController {
             txtProductName.setText(safeStr(row.getProductName()));
         }
 
-        updatePreviewImage(txtProductName.getText());
-
         try {
             ProductSpecDTO spec = productBUS.getSpec(selectedSpecId);
             txtRam.setText(safeStr(spec.getRam()));
@@ -391,7 +306,6 @@ public class ProductController {
         txtCostPrice.setText("0");
         txtStock.setText("0");
         cbSpecStatus.getSelectionModel().selectFirst();
-        updatePreviewImage(null);
 
         if (!cbFormBrand.getItems().isEmpty()) cbFormBrand.getSelectionModel().selectFirst();
         if (!cbFormCategory.getItems().isEmpty()) cbFormCategory.getSelectionModel().selectFirst();
@@ -453,7 +367,6 @@ public class ProductController {
         }
     }
 
-    @FXML
   @FXML
     private void onDeleteSpec() {
         if (selectedSpecId == null || selectedSpecId <= 0) {
@@ -504,67 +417,6 @@ public class ProductController {
         } catch (Exception ex) {
             AlertUtil.showError("Lỗi hệ thống", ex.getMessage());
         }
-    }
-
-    private void updatePreviewImage(String productName) {
-        if (imgProductPreview != null) {
-            imgProductPreview.setImage(getProductThumbnail(productName));
-        }
-        if (lblImageSlugHint != null) {
-            String slug = toSlug(productName);
-            lblImageSlugHint.setText(slug.isBlank()
-                    ? "Đặt file <tên-sp>.png/.jpg vào images/products/"
-                    : "File khớp: images/products/" + slug + ".png");
-        }
-    }
-
-    private Image getProductThumbnail(String productName) {
-        String slug = toSlug(productName);
-        if (productImageCache.containsKey(slug)) {
-            return productImageCache.get(slug);
-        }
-
-        if (!slug.isBlank()) {
-            for (String ext : new String[]{".png", ".jpg", ".jpeg"}) {
-                String path = "/images/products/" + slug + ext;
-                try (InputStream is = getClass().getResourceAsStream(path)) {
-                    if (is != null) {
-                        Image img = new Image(is, 80, 80, true, true);
-                        productImageCache.put(slug, img);
-                        return img;
-                    }
-                } catch (Exception ignored) {
-                }
-            }
-        }
-
-        Image fallback = createFallbackThumbnail();
-        productImageCache.put(slug, fallback);
-        return fallback;
-    }
-
-    private Image createFallbackThumbnail() {
-        int size = 80;
-        WritableImage img = new WritableImage(size, size);
-        PixelWriter pw = img.getPixelWriter();
-        Color bg = Color.web("#f3e8ff");
-        Color border = Color.web("#d8b4fe");
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                boolean isBorder = x < 2 || x >= size - 2 || y < 2 || y >= size - 2;
-                pw.setColor(x, y, isBorder ? border : bg);
-            }
-        }
-        return img;
-    }
-
-    private String toSlug(String input) {
-        if (input == null || input.isBlank()) return "";
-        String normalized = Normalizer.normalize(input.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD);
-        return normalized
-                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("^-|-$", "");
     }
 
     private ProductDTO buildProductFromForm(Integer productId) {
