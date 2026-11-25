@@ -1,197 +1,500 @@
 package com.phonestore.gui;
 
+import java.lang.reflect.Method;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import com.phonestore.bus.InventoryBUS;
+import com.phonestore.bus.ProductBUS;
 import com.phonestore.dto.InventoryDTO;
 import com.phonestore.dto.ProductSpecDTO;
-import com.phonestore.util.AlertUtil;
-import com.phonestore.util.FormatUtil;
+import com.phonestore.exception.BusinessException;
 
-import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.TableCell;
+import javafx.scene.control.Label;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
-import javafx.scene.layout.StackPane;
+import javafx.util.StringConverter;
 
 public class InventoryController {
 
-    @FXML private StackPane rootView;
-    @FXML private TextField txtSearchInventory;
-    @FXML private ComboBox<String> cbStockFilter;
-    
-    // Bảng Tab 1: Tồn kho sản phẩm (ProductSpecDTO)
-    @FXML private TableView<ProductSpecDTO> tblInventory;
-    @FXML private TableColumn<ProductSpecDTO, Integer> colSkuId;
-    @FXML private TableColumn<ProductSpecDTO, String> colSpecDetail;
-    @FXML private TableColumn<ProductSpecDTO, String> colPrice;
-    @FXML private TableColumn<ProductSpecDTO, Integer> colStockQty;
-    @FXML private TableColumn<ProductSpecDTO, String> colStatusAlert;
+    private static final DateTimeFormatter DATE_FMT =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    // Bảng Tab 2: Lịch sử nhập xuất kho (InventoryDTO)
-    @FXML private TableView<InventoryDTO> tblReceiptHistory;
-    @FXML private TableColumn<InventoryDTO, String> colReceiptType;
-    @FXML private TableColumn<InventoryDTO, Integer> colSpecIdLog;
-    @FXML private TableColumn<InventoryDTO, String> colQuantityChanged;
-    @FXML private TableColumn<InventoryDTO, String> colNotes;
+    @FXML private TabPane tabPaneInventory;
+    @FXML private Label lblLowStockAlert;
+    @FXML private Label lblMovementInfo;
+
+    // Tab 1: Tồn kho
+    @FXML private TextField txtSearchStock;
+    @FXML private ComboBox<String> cmbStockFilter;
+    @FXML private Spinner<Integer> spnLowStockThreshold;
+    @FXML private TableView<ProductSpecDTO> tblStock;
+    @FXML private TableColumn<ProductSpecDTO, String> colSpecId;
+    @FXML private TableColumn<ProductSpecDTO, String> colProductName;
+    @FXML private TableColumn<ProductSpecDTO, String> colRam;
+    @FXML private TableColumn<ProductSpecDTO, String> colStorage;
+    @FXML private TableColumn<ProductSpecDTO, String> colColor;
+    @FXML private TableColumn<ProductSpecDTO, Integer> colStockQty;
+    @FXML private TableColumn<ProductSpecDTO, String> colStockStatus;
+
+    // Tab 2: Nhập / Xuất kho
+    @FXML private ComboBox<String> cmbMovementType;
+    @FXML private ComboBox<ProductSpecDTO> cmbTargetSpec;
+    @FXML private TextField txtQuantity;
+    @FXML private TextField txtReferenceCode;
+    @FXML private TextField txtNote;
+    @FXML private Button btnSubmitMovement;
+
+    // Tab 3: Lịch sử kho
+    @FXML private TextField txtSearchHistory;
+    @FXML private ComboBox<String> cmbHistoryTypeFilter;
+    @FXML private TableView<InventoryDTO> tblHistory;
+    @FXML private TableColumn<InventoryDTO, String> colReceiptId;
+    @FXML private TableColumn<InventoryDTO, String> colHistoryProductName;
+    @FXML private TableColumn<InventoryDTO, String> colHistorySpec;
+    @FXML private TableColumn<InventoryDTO, String> colHistoryType;
+    @FXML private TableColumn<InventoryDTO, Integer> colHistoryQty;
+    @FXML private TableColumn<InventoryDTO, String> colHistoryNote;
+    @FXML private TableColumn<InventoryDTO, String> colCreatedDate;
 
     private final InventoryBUS inventoryBUS = new InventoryBUS();
+    private final ProductBUS productBUS = new ProductBUS();
 
-    private final ObservableList<ProductSpecDTO> inventoryData = FXCollections.observableArrayList();
-    private final ObservableList<InventoryDTO> historyData = FXCollections.observableArrayList();
+    // Map tra cứu nhanh: productId -> tên sản phẩm, specId -> cấu hình
+    private final Map<Integer, String> productNameMap = new HashMap<>();
+    private final Map<Integer, ProductSpecDTO> specMap = new HashMap<>();
+
+    private final ObservableList<ProductSpecDTO> allStockItems = FXCollections.observableArrayList();
+    private final ObservableList<ProductSpecDTO> filteredStockItems = FXCollections.observableArrayList();
+    private final ObservableList<InventoryDTO> allHistoryItems = FXCollections.observableArrayList();
+    private final ObservableList<InventoryDTO> filteredHistoryItems = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        initInventoryColumns();
-        initHistoryColumns();
-        loadFilterOptions();
-        loadData();
-
-        txtSearchInventory.textProperty().addListener((obs, o, n) -> filterInventory());
-        cbStockFilter.setOnAction(e -> filterInventory());
+        setupControls();
+        setupStockTable();
+        setupHistoryTable();
+        loadAllData();
     }
 
-    private void initInventoryColumns() {
-        colSkuId.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getSpecId()));
-        colSkuId.setStyle("-fx-alignment: CENTER;");
-        
-        colSpecDetail.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper("RAM: " + cellData.getValue().getRam() + " - ROM: " + cellData.getValue().getStorage()));
-        
-        colPrice.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(FormatUtil.formatCurrency(cellData.getValue().getPrice())));
-        colPrice.setStyle("-fx-alignment: CENTER-RIGHT;");
-        
-        colStockQty.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getStockQuantity()));
-        colStockQty.setStyle("-fx-alignment: CENTER;");
+    private void setupControls() {
+        cmbStockFilter.setItems(FXCollections.observableArrayList(
+                "Tất cả tồn kho",
+                "Sắp hết hàng",
+                "Hết hàng"
+        ));
+        cmbStockFilter.getSelectionModel().selectFirst();
 
-        colStatusAlert.setCellValueFactory(cellData -> {
-            int stock = cellData.getValue().getStockQuantity();
-            String status = stock <= InventoryBUS.DEFAULT_LOW_STOCK_THRESHOLD ? "⚠️ Sắp hết hàng" : "Ổn định";
-            return new ReadOnlyObjectWrapper<>(status);
+        spnLowStockThreshold.setValueFactory(
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(
+                        1, 1000, InventoryBUS.DEFAULT_LOW_STOCK_THRESHOLD
+                )
+        );
+
+        cmbMovementType.setItems(FXCollections.observableArrayList(
+                InventoryBUS.TYPE_IMPORT,
+                InventoryBUS.TYPE_EXPORT
+        ));
+        cmbMovementType.getSelectionModel().selectFirst();
+        cmbMovementType.valueProperty().addListener((obs, oldVal, newVal) -> updateMovementModeUI(newVal));
+        updateMovementModeUI(cmbMovementType.getValue());
+
+        cmbTargetSpec.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(ProductSpecDTO spec) {
+                if (spec == null) return "";
+                String productName = getProductNameBySpec(spec);
+                String detail = formatSpecDetail(spec);
+                return productName
+                        + (detail.isBlank() ? "" : " (" + detail + ")")
+                        + " - Tồn: " + spec.getStockQuantity();
+            }
+
+            @Override
+            public ProductSpecDTO fromString(String string) {
+                return null;
+            }
         });
 
-        colStatusAlert.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    setText(item);
-                    setAlignment(Pos.CENTER);
-                    if (item.contains("Sắp hết")) {
-                        setStyle("-fx-text-fill: #d9534f; -fx-font-weight: bold;");
-                    } else {
-                        setStyle("-fx-text-fill: #5cb85c;");
+        cmbHistoryTypeFilter.setItems(FXCollections.observableArrayList(
+                "Tất cả",
+                InventoryBUS.TYPE_IMPORT,
+                InventoryBUS.TYPE_EXPORT
+        ));
+        cmbHistoryTypeFilter.getSelectionModel().selectFirst();
+
+        txtSearchStock.textProperty().addListener((obs, o, n) -> applyStockFilter());
+        cmbStockFilter.valueProperty().addListener((obs, o, n) -> applyStockFilter());
+        spnLowStockThreshold.valueProperty().addListener((obs, o, n) -> {
+            updateLowStockBadge();
+            applyStockFilter();
+        });
+    }
+
+    private void updateMovementModeUI(String mode) {
+        if (InventoryBUS.TYPE_EXPORT.equals(mode)) {
+            btnSubmitMovement.setText("Xác nhận phiếu xuất kho");
+            lblMovementInfo.setText("Xuất kho sẽ trừ tồn kho của cấu hình đã chọn và ghi lịch sử giao dịch.");
+        } else {
+            btnSubmitMovement.setText("Xác nhận phiếu nhập kho");
+            lblMovementInfo.setText("Nhập kho sẽ cộng tồn kho của cấu hình đã chọn và ghi lịch sử giao dịch.");
+        }
+    }
+
+    private void setupStockTable() {
+        colSpecId.setCellValueFactory(c ->
+                new SimpleStringProperty(String.valueOf(c.getValue().getSpecId())));
+        colProductName.setCellValueFactory(c ->
+                new SimpleStringProperty(getProductNameBySpec(c.getValue())));
+        colRam.setCellValueFactory(c ->
+                new SimpleStringProperty(safeStr(c.getValue().getRam())));
+        colStorage.setCellValueFactory(c ->
+                new SimpleStringProperty(safeStr(c.getValue().getStorage())));
+        colColor.setCellValueFactory(c ->
+                new SimpleStringProperty(safeStr(c.getValue().getColor())));
+        colStockQty.setCellValueFactory(c ->
+                new SimpleIntegerProperty(c.getValue().getStockQuantity()).asObject());
+        colStockStatus.setCellValueFactory(c -> {
+            int qty = c.getValue().getStockQuantity();
+            int threshold = getThreshold();
+            if (qty <= 0) return new SimpleStringProperty("Hết hàng");
+            if (qty <= threshold) return new SimpleStringProperty("Sắp hết");
+            return new SimpleStringProperty("Còn hàng");
+        });
+
+        tblStock.setItems(filteredStockItems);
+    }
+
+    private void setupHistoryTable() {
+        colReceiptId.setCellValueFactory(c ->
+                new SimpleStringProperty("GD#" + c.getValue().getInventoryId()));
+        colHistoryProductName.setCellValueFactory(c -> {
+            Integer specId = c.getValue().getSpecId();
+            if (specId == null) return new SimpleStringProperty("—");
+            ProductSpecDTO spec = specMap.get(specId);
+            return new SimpleStringProperty(spec != null ? getProductNameBySpec(spec) : "Spec #" + specId);
+        });
+        colHistorySpec.setCellValueFactory(c -> {
+            Integer specId = c.getValue().getSpecId();
+            if (specId == null) return new SimpleStringProperty("—");
+            ProductSpecDTO spec = specMap.get(specId);
+            return new SimpleStringProperty(spec != null ? formatSpecDetail(spec) : ("#" + specId));
+        });
+        colHistoryType.setCellValueFactory(c ->
+                new SimpleStringProperty(safeStr(c.getValue().getTransactionType())));
+        colHistoryQty.setCellValueFactory(c -> {
+            InventoryDTO log = c.getValue();
+            int qty = log.getQuantityIn() > 0 ? log.getQuantityIn() : log.getQuantityOut();
+            return new SimpleIntegerProperty(qty).asObject();
+        });
+        colHistoryNote.setCellValueFactory(c ->
+                new SimpleStringProperty(safeStr(c.getValue().getNotes())));
+        colCreatedDate.setCellValueFactory(c -> {
+            if (c.getValue().getTransactionDate() == null) {
+                return new SimpleStringProperty("");
+            }
+            return new SimpleStringProperty(c.getValue().getTransactionDate().format(DATE_FMT));
+        });
+
+        tblHistory.setItems(filteredHistoryItems);
+    }
+
+    @FXML
+    private void handleRefresh() {
+        loadAllData();
+    }
+
+    private void loadAllData() {
+        loadProductNames();
+        loadStockData();
+        loadHistoryData();
+    }
+
+   private void loadProductNames() {
+        productNameMap.clear();
+        try {
+            List<?> products = invokeZeroArgList(
+                    productBUS,
+                    "getAllProducts", "findAll", "getProducts", "getAll"
+            );
+            for (Object p : products) {
+                if (p != null) {
+                    int id = invokeInt(p, "getProductId", "getId");
+                    String name = invokeString(p, "getProductName", "getName", "getProductTitle");
+                    if (id > 0 && !name.isBlank()) {
+                        productNameMap.put(id, name);
                     }
                 }
             }
-        });
+        } catch (Exception ignored) {
+            // Nếu chưa có quyền xem sản phẩm hoặc lỗi nhẹ, vẫn fallback về Product #<id>
+        }
     }
-
-    private void initHistoryColumns() {
-        colReceiptType.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getTransactionType()));
-        
-        colSpecIdLog.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getSpecId()));
-        colSpecIdLog.setStyle("-fx-alignment: CENTER;");
-        
-        colQuantityChanged.setCellValueFactory(cellData -> {
-            InventoryDTO log = cellData.getValue();
-            String text = log.getQuantityIn() > 0 ? "+" + log.getQuantityIn() : "-" + log.getQuantityOut();
-            return new ReadOnlyObjectWrapper<>(text);
-        });
-        colQuantityChanged.setStyle("-fx-alignment: CENTER;");
-        
-        colNotes.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getNotes()));
-    }
-
-    private void loadFilterOptions() {
-        cbStockFilter.setItems(FXCollections.observableArrayList("Tất cả trạng thái", "Sắp hết hàng", "Còn hàng"));
-        cbStockFilter.getSelectionModel().selectFirst();
-    }
-
-    private void loadData() {
+    private void loadStockData() {
         try {
-            // Lấy toàn bộ danh sách thông qua ngưỡng cực đại
-            List<ProductSpecDTO> specs = inventoryBUS.getLowStockSpecs(Integer.MAX_VALUE);
-            inventoryData.setAll(specs);
-            tblInventory.setItems(inventoryData);
+            List<ProductSpecDTO> rows = inventoryBUS.getLowStockSpecs(Integer.MAX_VALUE);
+            allStockItems.setAll(rows);
 
-            // Lấy lịch sử biến động kho
+            specMap.clear();
+            for (ProductSpecDTO spec : rows) {
+                specMap.put(spec.getSpecId(), spec);
+            }
+
+            ProductSpecDTO selectedSpec = cmbTargetSpec.getValue();
+            cmbTargetSpec.setItems(FXCollections.observableArrayList(rows));
+            if (selectedSpec != null && rows.contains(selectedSpec)) {
+                cmbTargetSpec.getSelectionModel().select(selectedSpec);
+            } else if (!rows.isEmpty()) {
+                cmbTargetSpec.getSelectionModel().selectFirst();
+            }
+
+            updateLowStockBadge();
+            applyStockFilter();
+        } catch (BusinessException ex) {
+            showError("Thông báo tồn kho", ex.getMessage());
+        } catch (Exception ex) {
+            showError("Lỗi tải dữ liệu tồn kho", ex.getMessage());
+        }
+    }
+
+    private void loadHistoryData() {
+        try {
             List<InventoryDTO> logs = inventoryBUS.getAllInventoryLogs();
-            historyData.setAll(logs);
-            tblReceiptHistory.setItems(historyData);
-        } catch (Exception e) {
-            AlertUtil.showError("Lỗi hệ thống", e.getMessage());
+            allHistoryItems.setAll(logs);
+            applyHistoryFilter();
+        } catch (BusinessException ex) {
+            showError("Thông báo lịch sử kho", ex.getMessage());
+        } catch (Exception ex) {
+            showError("Lỗi tải lịch sử kho", ex.getMessage());
         }
     }
 
-    private void filterInventory() {
-        String keyword = txtSearchInventory.getText();
-        String filterChoice = cbStockFilter.getValue();
+    private void updateLowStockBadge() {
+        int threshold = getThreshold();
+        long lowCount = allStockItems.stream()
+                .filter(spec -> spec.getStockQuantity() <= threshold)
+                .count();
+        lblLowStockAlert.setText("Cảnh báo tồn thấp (≤ " + threshold + "): " + lowCount);
+    }
+
+    @FXML
+    private void handleFilterStock() {
+        applyStockFilter();
+    }
+
+    @FXML
+    private void handleResetStockFilter() {
+        txtSearchStock.clear();
+        cmbStockFilter.getSelectionModel().selectFirst();
+        applyStockFilter();
+    }
+
+    private void applyStockFilter() {
+        String keyword = txtSearchStock.getText() == null
+                ? ""
+                : txtSearchStock.getText().trim().toLowerCase(Locale.ROOT);
+        String filterMode = cmbStockFilter.getValue();
+        int threshold = getThreshold();
+
+        List<ProductSpecDTO> result = new ArrayList<>();
+        for (ProductSpecDTO spec : allStockItems) {
+            int qty = spec.getStockQuantity();
+            if ("Sắp hết hàng".equals(filterMode) && qty > threshold) continue;
+            if ("Hết hàng".equals(filterMode) && qty > 0) continue;
+
+            if (!keyword.isEmpty()) {
+                String haystack = (
+                        spec.getSpecId() + " " +
+                        getProductNameBySpec(spec) + " " +
+                        safeStr(spec.getRam()) + " " +
+                        safeStr(spec.getStorage()) + " " +
+                        safeStr(spec.getColor())
+                ).toLowerCase(Locale.ROOT);
+                if (!haystack.contains(keyword)) continue;
+            }
+            result.add(spec);
+        }
+        filteredStockItems.setAll(result);
+    }
+
+    @FXML
+    private void handleSubmitMovement() {
+        ProductSpecDTO selectedSpec = cmbTargetSpec.getValue();
+        if (selectedSpec == null) {
+            showError("Thiếu thông tin", "Vui lòng chọn sản phẩm / cấu hình.");
+            return;
+        }
+
+        int qty;
+        try {
+            qty = Integer.parseInt(txtQuantity.getText().trim());
+        } catch (NumberFormatException e) {
+            showError("Số lượng không hợp lệ", "Vui lòng nhập số nguyên hợp lệ.");
+            return;
+        }
+
+        String mode = cmbMovementType.getValue();
+        String refCode = txtReferenceCode.getText() == null ? "" : txtReferenceCode.getText().trim();
+        String note = txtNote.getText() == null ? "" : txtNote.getText().trim();
+        String fullNote = refCode.isBlank() ? note : ("[" + refCode + "] " + note).trim();
 
         try {
-            List<ProductSpecDTO> all = inventoryBUS.getLowStockSpecs(Integer.MAX_VALUE);
-            ObservableList<ProductSpecDTO> filtered = FXCollections.observableArrayList();
-
-            for (ProductSpecDTO p : all) {
-                boolean matchesKeyword = (keyword == null || keyword.isBlank()) ||
-                        String.valueOf(p.getSpecId()).contains(keyword.trim()) ||
-                        p.getRam().toLowerCase().contains(keyword.toLowerCase().trim()) ||
-                        p.getStorage().toLowerCase().contains(keyword.toLowerCase().trim());
-
-                boolean matchesStock = true;
-                if ("Sắp hết hàng".equals(filterChoice)) {
-                    matchesStock = p.getStockQuantity() <= InventoryBUS.DEFAULT_LOW_STOCK_THRESHOLD;
-                } else if ("Còn hàng".equals(filterChoice)) {
-                    matchesStock = p.getStockQuantity() > InventoryBUS.DEFAULT_LOW_STOCK_THRESHOLD;
-                }
-
-                if (matchesKeyword && matchesStock) {
-                    filtered.add(p);
-                }
+            if (InventoryBUS.TYPE_EXPORT.equals(mode)) {
+                inventoryBUS.exportStock(selectedSpec.getSpecId(), qty, fullNote);
+                showInfo("Thành công", "Đã lập phiếu xuất kho thành công.");
+            } else {
+                inventoryBUS.importStock(selectedSpec.getSpecId(), qty, fullNote);
+                showInfo("Thành công", "Đã lập phiếu nhập kho thành công.");
             }
-            tblInventory.setItems(filtered);
-        } catch (Exception e) {
-            AlertUtil.showError("Lỗi", e.getMessage());
+            handleClearMovementForm();
+            loadAllData();
+        } catch (BusinessException ex) {
+            showError("Không thể thực hiện phiếu kho", ex.getMessage());
+        } catch (Exception ex) {
+            showError("Lỗi hệ thống", ex.getMessage());
         }
     }
 
     @FXML
-    private void onRefreshStock() {
-        txtSearchInventory.clear();
-        cbStockFilter.getSelectionModel().selectFirst();
-        loadData();
-        AlertUtil.showInfo("Thành công", "Đã làm mới dữ liệu kho hàng.");
+    private void handleClearMovementForm() {
+        txtQuantity.clear();
+        txtReferenceCode.clear();
+        txtNote.clear();
     }
 
     @FXML
-    private void onOpenCreateReceiptModal() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Lập phiếu nhập kho nhanh");
-        dialog.setHeaderText("Nhập thông tin giao dịch nhập kho");
-        dialog.setContentText("Cú pháp: [Mã SKU SpecID],[Số lượng],[Ghi chú]\nVí dụ: 1,5,Nhập thêm hàng từ nhà cung cấp");
+    private void handleFilterHistory() {
+        applyHistoryFilter();
+    }
 
-        dialog.showAndWait().ifPresent(result -> {
-            try {
-                String[] parts = result.split(",");
-                int specId = Integer.parseInt(parts[0].trim());
-                int qty = Integer.parseInt(parts[1].trim());
-                String note = parts.length > 2 ? parts[2].trim() : "Nhập kho thủ công";
+    @FXML
+    private void handleResetHistoryFilter() {
+        txtSearchHistory.clear();
+        cmbHistoryTypeFilter.getSelectionModel().selectFirst();
+        applyHistoryFilter();
+    }
 
-                inventoryBUS.importStock(specId, qty, note);
-                AlertUtil.showInfo("Thành công", "Lập phiếu nhập kho và cập nhật tồn kho thành công!");
-                loadData();
-            } catch (Exception e) {
-                AlertUtil.showError("Lỗi nghiệp vụ", "Không thể nhập kho: " + e.getMessage());
+    private void applyHistoryFilter() {
+        String keyword = txtSearchHistory.getText() == null
+                ? ""
+                : txtSearchHistory.getText().trim().toLowerCase(Locale.ROOT);
+        String typeFilter = cmbHistoryTypeFilter.getValue();
+
+        List<InventoryDTO> result = new ArrayList<>();
+        for (InventoryDTO log : allHistoryItems) {
+            String rowType = safeStr(log.getTransactionType());
+            if (typeFilter != null && !"Tất cả".equals(typeFilter) && !typeFilter.equalsIgnoreCase(rowType)) {
+                continue;
             }
-        });
+
+            if (!keyword.isEmpty()) {
+                Integer specId = log.getSpecId();
+                ProductSpecDTO spec = specId != null ? specMap.get(specId) : null;
+                String prodName = spec != null ? getProductNameBySpec(spec) : "";
+                String haystack = (
+                        "gd#" + log.getInventoryId() + " " +
+                        log.getInventoryId() + " " +
+                        prodName + " " +
+                        safeStr(log.getNotes())
+                ).toLowerCase(Locale.ROOT);
+                if (!haystack.contains(keyword)) continue;
+            }
+            result.add(log);
+        }
+        filteredHistoryItems.setAll(result);
+    }
+
+    private String getProductNameBySpec(ProductSpecDTO spec) {
+        if (spec == null) return "";
+        Integer pid = spec.getProductId();
+        if (pid != null && productNameMap.containsKey(pid)) {
+            return productNameMap.get(pid);
+        }
+        return pid != null ? "Sản phẩm #" + pid : "Cấu hình #" + spec.getSpecId();
+    }
+
+    private String formatSpecDetail(ProductSpecDTO spec) {
+        List<String> parts = new ArrayList<>();
+        if (spec.getRam() != null && !spec.getRam().isBlank()) parts.add(spec.getRam().trim());
+        if (spec.getStorage() != null && !spec.getStorage().isBlank()) parts.add(spec.getStorage().trim());
+        if (spec.getColor() != null && !spec.getColor().isBlank()) parts.add(spec.getColor().trim());
+        return String.join(" / ", parts);
+    }
+
+    private int getThreshold() {
+        Integer v = spnLowStockThreshold.getValue();
+        return v == null || v < 0 ? InventoryBUS.DEFAULT_LOW_STOCK_THRESHOLD : v;
+    }
+
+    private String safeStr(String s) {
+        return s == null ? "" : s;
+    }
+
+    private List<?> invokeZeroArgList(Object target, String... names) {
+        for (String name : names) {
+            try {
+                Method m = target.getClass().getMethod(name);
+                Object val = m.invoke(target);
+                if (val instanceof List<?> list) return list;
+            } catch (Exception ignored) {
+            }
+        }
+        return List.of();
+    }
+
+    private int invokeInt(Object obj, String... names) {
+        for (String name : names) {
+            try {
+                Method m = obj.getClass().getMethod(name);
+                Object val = m.invoke(obj);
+                if (val instanceof Number n) return n.intValue();
+            } catch (Exception ignored) {
+            }
+        }
+        return 0;
+    }
+
+    private String invokeString(Object obj, String... names) {
+        for (String name : names) {
+            try {
+                Method m = obj.getClass().getMethod(name);
+                Object val = m.invoke(obj);
+                if (val != null) return String.valueOf(val);
+            } catch (Exception ignored) {
+            }
+        }
+        return "";
+    }
+
+    private void showError(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message == null || message.isBlank() ? "Đã xảy ra lỗi không xác định." : message);
+        alert.showAndWait();
+    }
+
+    private void showInfo(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
