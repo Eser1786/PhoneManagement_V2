@@ -1,10 +1,18 @@
 package com.phonestore.gui;
 
+import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.Normalizer;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import com.phonestore.bus.CategoryBUS;
 import com.phonestore.bus.CustomerBUS;
@@ -13,6 +21,7 @@ import com.phonestore.bus.ProductBUS;
 import com.phonestore.dto.CategoryDTO;
 import com.phonestore.dto.CustomerDTO;
 import com.phonestore.dto.OrderDetailDTO;
+import com.phonestore.dto.ProductFilter;
 import com.phonestore.dto.ProductListItemDTO;
 import com.phonestore.dto.UserDTO;
 import com.phonestore.exception.BusinessException;
@@ -32,8 +41,14 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.util.StringConverter;
 
 public class SalesController {
@@ -72,6 +87,7 @@ public class SalesController {
 
     private final ObservableList<ProductListItemDTO> catalogData = FXCollections.observableArrayList();
     private final ObservableList<CartItem> cartData = FXCollections.observableArrayList();
+    private final Map<String, Image> productImageCache = new HashMap<>();
 
     @FXML
     public void initialize() {
@@ -82,8 +98,10 @@ public class SalesController {
         loadCustomers();
         loadCatalogData();
 
-        txtSearchProduct.textProperty().addListener((obs, o, n) -> loadCatalogData());
+        txtSearchProduct.textProperty().addListener((obs, oldVal, newVal) -> loadCatalogData());
         cbCategoryFilter.setOnAction(e -> loadCatalogData());
+        txtDiscountPercent.textProperty().addListener((obs, oldVal, newVal) -> updateCartTotal());
+        txtCashPaid.textProperty().addListener((obs, oldVal, newVal) -> calculateChange());
         txtDiscountPercent.textProperty().addListener((obs, o, n) -> updateCartTotal());
         txtCashPaid.textProperty().addListener((obs, o, n) -> calculateChange());
         cbPaymentMethod.setOnAction(e -> calculateChange());
@@ -96,14 +114,58 @@ public class SalesController {
                 cbPaymentMethod.getSelectionModel().selectFirst();
             }
         }
+        if (txtDiscountPercent != null && (txtDiscountPercent.getText() == null || txtDiscountPercent.getText().isBlank())) {
+            txtDiscountPercent.setText("0");
+        }
+        updateCartTotal();
     }
 
     private void initCatalogColumns() {
+        tblCatalog.setFixedCellSize(52.0);
+
         colCatName.setCellValueFactory(cellData -> {
             ProductListItemDTO item = cellData.getValue();
             return new ReadOnlyObjectWrapper<>(
                     item.getProductName() + " - " + safeStr(item.getRam()) + "/" + safeStr(item.getStorage())
             );
+        });
+
+        colCatName.setCellFactory(col -> new TableCell<>() {
+            private final ImageView imageView = new ImageView();
+            private final Label lblName = new Label();
+            private final HBox container = new HBox(10.0, imageView, lblName);
+
+            {
+                imageView.setFitWidth(38.0);
+                imageView.setFitHeight(38.0);
+                imageView.setPreserveRatio(true);
+                imageView.setSmooth(true);
+
+                Rectangle clip = new Rectangle(38.0, 38.0);
+                clip.setArcWidth(8.0);
+                clip.setArcHeight(8.0);
+                imageView.setClip(clip);
+
+                lblName.setStyle("-fx-font-weight: 600; -fx-text-fill: #1f2937;");
+                container.setAlignment(Pos.CENTER_LEFT);
+            }
+
+            @Override
+            protected void updateItem(String text, boolean empty) {
+                super.updateItem(text, empty);
+                if (empty || text == null || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    ProductListItemDTO row = getTableView().getItems().get(getIndex());
+                    imageView.setImage(getProductThumbnail(row != null ? row.getProductName() : text));
+                    lblName.setText(text);
+                    setGraphic(container);
+                    setText(null);
+                }
+            }
+        });
+
         });
         colCatPrice.setCellValueFactory(cellData ->
                 new ReadOnlyObjectWrapper<>(FormatUtil.formatCurrency(cellData.getValue().getPrice())));
@@ -115,9 +177,14 @@ public class SalesController {
 
         colCatAction.setCellFactory(col -> new TableCell<>() {
             private final Button btnAdd = new Button("+ Chọn");
+
             {
                 btnAdd.getStyleClass().add("app-btn-action");
                 btnAdd.setOnAction(e -> {
+                    if (getIndex() >= 0 && getIndex() < getTableView().getItems().size()) {
+                        ProductListItemDTO row = getTableView().getItems().get(getIndex());
+                        addToCart(row);
+                    }
                     ProductListItemDTO row = getTableView().getItems().get(getIndex());
                     addToCart(row);
                 });
@@ -126,6 +193,7 @@ public class SalesController {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
+                if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
                 if (empty) {
                     setGraphic(null);
                 } else {
@@ -204,11 +272,14 @@ public class SalesController {
 
         colCartAction.setCellFactory(col -> new TableCell<>() {
             private final Button btnRemove = new Button("X");
+
             {
                 btnRemove.getStyleClass().add("app-btn-danger-outline");
                 btnRemove.setOnAction(e -> {
-                    cartData.remove(getTableView().getItems().get(getIndex()));
-                    updateCartTotal();
+                    if (getIndex() >= 0 && getIndex() < getTableView().getItems().size()) {
+                        cartData.remove(getTableView().getItems().get(getIndex()));
+                        updateCartTotal();
+                    }
                 });
             }
 
@@ -253,6 +324,7 @@ public class SalesController {
         try {
             List<CustomerDTO> customers = customerBUS.getAllCustomers();
             ObservableList<CustomerDTO> items = FXCollections.observableArrayList();
+            items.add(null);
             items.add(null); // đại diện cho Khách vãng lai
             items.addAll(customers);
             cbCustomer.setItems(items);
@@ -261,6 +333,7 @@ public class SalesController {
                 @Override
                 public String toString(CustomerDTO c) {
                     if (c == null) return "Khách vãng lai";
+                    return formatCustomerLabel(c);
                     String label = formatCustomerLabel(c);
                     return label;
                 }
@@ -293,7 +366,7 @@ public class SalesController {
     }
 
     private void loadCatalogData() {
-        com.phonestore.dto.ProductFilter filter = new com.phonestore.dto.ProductFilter();
+        ProductFilter filter = new ProductFilter();
         String kw = txtSearchProduct.getText();
         if (kw != null && !kw.isBlank()) {
             filter.setKeyword(kw.trim());
@@ -390,12 +463,16 @@ public class SalesController {
         if (lblGrossTotal != null) {
             lblGrossTotal.setText(FormatUtil.formatCurrency(gross));
         }
+        if (lblSubTotal != null) {
+            lblSubTotal.setText(FormatUtil.formatCurrency(net));
+        }
         lblSubTotal.setText(FormatUtil.formatCurrency(net));
         tblCart.refresh();
         calculateChange();
     }
 
     private void calculateChange() {
+        if (lblChangeReturn == null || txtCashPaid == null) return;
         BigDecimal total = getNetTotal(parseDiscountSafe());
         String paidStr = txtCashPaid.getText();
         if (paidStr == null || paidStr.isBlank()) {
@@ -459,6 +536,7 @@ public class SalesController {
                 ? cbPaymentMethod.getValue()
                 : OrderBUS.PAYMENT_CASH;
 
+        String paidStr = (txtCashPaid != null && txtCashPaid.getText() != null) ? txtCashPaid.getText().trim() : "";
         // Kiểm tra tiền khách đưa nếu thanh toán tiền mặt hoặc có nhập số tiền
         String paidStr = txtCashPaid.getText() == null ? "" : txtCashPaid.getText().trim();
         if (OrderBUS.PAYMENT_CASH.equals(paymentMethod) || !paidStr.isEmpty()) {
@@ -516,6 +594,55 @@ public class SalesController {
         } catch (Exception ex) {
             AlertUtil.showError("Lỗi hệ thống", ex.getMessage());
         }
+    }
+
+    private Image getProductThumbnail(String productName) {
+        String slug = toSlug(productName);
+        if (productImageCache.containsKey(slug)) {
+            return productImageCache.get(slug);
+        }
+
+        String[] extensions = {".png", ".jpg", ".jpeg"};
+        for (String ext : extensions) {
+            String path = "/images/products/" + slug + ext;
+            try (InputStream is = getClass().getResourceAsStream(path)) {
+                if (is != null) {
+                    Image img = new Image(is, 76, 76, true, true);
+                    productImageCache.put(slug, img);
+                    return img;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        Image fallback = createFallbackThumbnail();
+        productImageCache.put(slug, fallback);
+        return fallback;
+    }
+
+    private Image createFallbackThumbnail() {
+        int size = 76;
+        WritableImage img = new WritableImage(size, size);
+        PixelWriter pw = img.getPixelWriter();
+
+        Color bg = Color.web("#f3e8ff");
+        Color border = Color.web("#d8b4fe");
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                boolean isBorder = x < 2 || x >= size - 2 || y < 2 || y >= size - 2;
+                pw.setColor(x, y, isBorder ? border : bg);
+            }
+        }
+        return img;
+    }
+
+    private String toSlug(String input) {
+        if (input == null || input.isBlank()) return "default-phone";
+        String normalized = Normalizer.normalize(input.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD);
+        return normalized
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-|-$", "");
     }
 
     private String safeStr(String s) {

@@ -16,6 +16,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.ImageView?>
 
 <BorderPane stylesheets="@../css/style.css"
             xmlns="http://javafx.com/javafx/21"
@@ -57,6 +58,7 @@
                 <TableView fx:id="tblProducts" styleClass="app-table" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="colSpecId" prefWidth="70.0" text="Mã PB" />
+                        <TableColumn fx:id="colImage" minWidth="64.0" prefWidth="64.0" text="Ảnh" />
                         <TableColumn fx:id="colProductName" prefWidth="180.0" text="Tên sản phẩm" />
                         <TableColumn fx:id="colBrand" prefWidth="105.0" text="Hãng" />
                         <TableColumn fx:id="colCategory" prefWidth="110.0" text="Danh mục" />
@@ -73,6 +75,14 @@
 
             <!-- Phải: Form thông tin sản phẩm & cấu hình -->
             <VBox spacing="10.0" styleClass="app-card">
+               <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <ImageView fx:id="imgProductPreview" fitHeight="64.0" fitWidth="64.0"
+                               pickOnBounds="true" preserveRatio="true" />
+                    <VBox spacing="2.0">
+                        <Label text="Ảnh sản phẩm" styleClass="dash-card-title" />
+                        <Label fx:id="lblImageSlugHint" text="Tự động khớp theo tên SP trong /images/products/"
+                               styleClass="app-muted" wrapText="true" />
+                    </VBox>
                 <HBox alignment="CENTER_LEFT">
                     <Label fx:id="lblFormTitle" text="Thêm sản phẩm mới" styleClass="dash-section-title" />
                     <Region HBox.hgrow="ALWAYS" />
