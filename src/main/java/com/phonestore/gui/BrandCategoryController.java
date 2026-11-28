@@ -176,7 +176,8 @@ public class BrandCategoryController {
     private void buildCategoryPanel() {
         categoryPanel = new CrudPanel<CategoryDTO>("DANH MỤC", "Thêm danh mục",
                 "Tìm kiếm danh mục...", "danh mục", 5,
-                c -> c.getCategoryName() + " " + nz(c.getDescription()));
+                c -> c.getCategoryName() + " " + nz(c.getDescription())); 
+        categoryPanel.getStyleClass().add("category-panel");  
 
         categoryPanel.addIndexColumn(50);
         categoryPanel.addTextColumn("TÊN DANH MỤC", 150, CategoryDTO::getCategoryName);

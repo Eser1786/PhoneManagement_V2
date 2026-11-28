@@ -261,7 +261,8 @@ public class CrudPanel<T> extends VBox {
     public void addActionColumn(double width, boolean showEdit, boolean showDelete) {
         addNodeColumn("THAO TÁC", width, item -> {
             HBox box = new HBox(6);
-            box.setAlignment(Pos.CENTER_LEFT);
+            box.setPrefWidth(width - 16);
+            box.setAlignment(Pos.CENTER);
             if (showEdit) {
                 Button edit = new Button("Sửa");
                 edit.getStyleClass().add("crud-btn-outline");
