@@ -102,6 +102,7 @@ public class StaffController {
         panel.setFlat(true);
         panel.setNumberedPager(true);
         panel.setRowHeight(68);
+        panel.getStyleClass().add("staff-panel");
         panel.setOnCountChanged(n -> lblCount.setText(n + " nhân viên"));
         panel.setExtraFilter(r -> {
             String p = cboPosition.getValue();
