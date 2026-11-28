@@ -70,6 +70,12 @@
     -fx-font-weight: bold;
     -fx-alignment: CENTER_LEFT;
 }
+
+/* Căn giữa tiêu đề cột Thương hiệu và Danh mục */
+.brand-panel .crud-table .column-header .label,
+.category-panel .crud-table .column-header .label {
+    -fx-alignment: CENTER;
+}
 .crud-table .table-row-cell {
     -fx-background-color: transparent;
     -fx-border-color: transparent transparent -crud-border transparent;
