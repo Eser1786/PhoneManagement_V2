@@ -254,3 +254,19 @@
 .perm-text     { -fx-font-size: 13px; -fx-text-fill: -crud-text; }
 .perm-text-off { -fx-font-size: 13px; -fx-text-fill: -crud-muted; }
 .perm-code     { -fx-font-size: 11px; -fx-text-fill: -crud-muted; }
+
+/* Căn giữa tiêu đề các cột */
+.staff-panel .crud-table .column-header .label {
+    -fx-alignment: CENTER;
+}
+
+/* Căn giữa nội dung tất cả các ô */
+.staff-panel .crud-table .table-cell {
+    -fx-alignment: CENTER;
+}
+
+/* Căn giữa chữ trong các ô dữ liệu */
+.staff-panel .crud-table .table-cell .label {
+    -fx-alignment: CENTER;
+    -fx-text-alignment: CENTER;
+}
