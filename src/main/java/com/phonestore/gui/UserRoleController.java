@@ -83,6 +83,7 @@ public class UserRoleController {
         panel.setFlat(true);
         panel.setNumberedPager(true);
         panel.setRowHeight(68);
+        panel.getStyleClass().add("user-role-panel");
         panel.setOnCountChanged(n -> lblCount.setText(n + " tài khoản"));
         panel.setExtraFilter(r -> {
             String f = cboRoleFilter.getValue();

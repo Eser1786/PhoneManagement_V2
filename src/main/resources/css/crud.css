@@ -270,3 +270,8 @@
     -fx-alignment: CENTER;
     -fx-text-alignment: CENTER;
 }
+
+/* Căn giữa tiêu đề bảng Quản lý tài khoản */
+.user-role-panel .crud-table .column-header .label {
+    -fx-alignment: CENTER;
+}
